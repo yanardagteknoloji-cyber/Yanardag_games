@@ -14,9 +14,7 @@
 />
 
 <style>
-/* ─────────────────────────────────────────────────────────────
-   TOKENLAR
-───────────────────────────────────────────────────────────── */
+
 :root {
   --bg: #0a0a0c;
   --panel: #17171b;
@@ -48,9 +46,7 @@ body {
 
 a { color: inherit; }
 
-/* ─────────────────────────────────────────────────────────────
-   HEADER
-───────────────────────────────────────────────────────────── */
+
 .banner {
   background: #000;
   border-bottom: 1px solid var(--border);
@@ -82,9 +78,7 @@ a { color: inherit; }
   font-size: 1rem;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   ANA İÇERİK / OYUN IZGARASI
-───────────────────────────────────────────────────────────── */
+
 .main {
   max-width: 1080px;
   margin: 0 auto;
@@ -187,7 +181,19 @@ a { color: inherit; }
   margin: 0.15rem 0 0.3rem;
 }
 
-/* PLAY düğmesi */
+.game-card__badge {
+  display: inline-block;
+  width: fit-content;
+  background: rgba(255, 138, 61, 0.16);
+  color: var(--orange);
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
 .play-btn {
   appearance: none;
   border: none;
@@ -211,9 +217,7 @@ a { color: inherit; }
   box-shadow: none;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   DURUM MESAJLARI (yükleniyor / boş / hata)
-───────────────────────────────────────────────────────────── */
+
 .state-panel {
   grid-column: 1 / -1;
   background: var(--panel);
@@ -238,9 +242,6 @@ a { color: inherit; }
   margin: 0 auto;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   OVERLAY / OYUN EKRANI
-───────────────────────────────────────────────────────────── */
 .overlay {
   position: fixed;
   inset: 0;
@@ -308,9 +309,7 @@ a { color: inherit; }
   background: #fff;
 }
 
-/* ─────────────────────────────────────────────────────────────
-   FOOTER
-───────────────────────────────────────────────────────────── */
+
 .site-footer {
   border-top: 1px solid var(--border);
   color: var(--muted);
@@ -321,9 +320,7 @@ a { color: inherit; }
 
 .site-footer strong { color: var(--navy); }
 
-/* ─────────────────────────────────────────────────────────────
-   ERİŞİLEBİLİRLİK
-───────────────────────────────────────────────────────────── */
+
 .play-btn:focus-visible,
 .overlay__icon-btn:focus-visible {
   outline: 2px solid var(--navy);
@@ -368,19 +365,28 @@ a { color: inherit; }
 <script>
 // ─────────────────────────────────────────────────────────────
 // OTOMATİK OYUN TARAYICI
-// games/ klasörüne bir .html dosyası koyup push'lamak yeterli —
-// bu sayfa açıldığında klasörü kendisi tarar, elle listeye ekleme
-// gerekmez.
+// games/ klasörüne bir .html (veya artık bir .swf) dosyası koyup
+// push'lamak yeterli — bu sayfa açıldığında klasörü kendisi tarar,
+// elle listeye ekleme gerekmez.
 //
 // Tespit sırası:
 //   1) jsDelivr CDN (GitHub reposunu yansıtır, yüksek istek limiti)
 //   2) GitHub API (yedek)
 //   3) Sunucu dizin listesi (sadece yerel önizleme için)
 //
-// Oyun dosyasının <head>'ine şunları eklersen kart bunları kullanır:
+// Oyun dosyasının <head>'ine şunları eklersen kart bunları kullanır
+// (sadece .html oyunları için geçerli — .swf dosyalarının meta
+// etiketi olmaz, dosya adı otomatik başlık olarak kullanılır):
 //   <title>Oyun Adı</title>
 //   <meta name="description" content="Kısa açıklama">
 //   <meta name="controls" content="Ok tuşları">
+//
+// .SWF (FLASH) DESTEĞİ
+// games/ klasörüne bir .swf dosyası koyduğunda da otomatik olarak
+// listeye eklenir. Tarayıcılar artık Flash'ı native oynatamadığı
+// için OYNA'ya basıldığında Ruffle (https://ruffle.rs) adlı açık
+// kaynaklı Flash emülatörü CDN'den yüklenip .swf dosyasını
+// WebAssembly ile emüle eder. Ekstra kurulum gerekmez.
 // ─────────────────────────────────────────────────────────────
 (function () {
   const grid = document.getElementById("games-grid");
@@ -399,6 +405,11 @@ a { color: inherit; }
   const ACCENTS = ["blue", "orange", "green", "pink"];
   const ICONS = ["🎮", "👾", "🕹️", "🚀", "🏆", "⚡"];
   const GAMES_DIR = "games";
+  const GAME_FILE_PATTERN = /\.(html?|swf)$/i;
+  // Ruffle'ın kendi kendine host edilen CDN script'i. embed/object
+  // etiketlerini ve .swf uzantılı dosyaları otomatik algılayıp
+  // emülatörle değiştirir.
+  const RUFFLE_SRC = "https://unpkg.com/@ruffle-rs/ruffle";
 
   function escapeHtml(str) {
     const div = document.createElement("div");
@@ -406,9 +417,13 @@ a { color: inherit; }
     return div.innerHTML;
   }
 
+  function isSwf(filename) {
+    return /\.swf$/i.test(filename);
+  }
+
   function prettify(filename) {
     return filename
-      .replace(/\.html?$/i, "")
+      .replace(GAME_FILE_PATTERN, "")
       .replace(/[-_]+/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
   }
@@ -431,7 +446,7 @@ a { color: inherit; }
     const gamesDir = (data.files || []).find((f) => f.name === GAMES_DIR && f.files);
     if (!gamesDir) return [];
     return gamesDir.files
-      .filter((f) => !f.files && /\.html?$/i.test(f.name) && f.name.toLowerCase() !== "index.html")
+      .filter((f) => !f.files && GAME_FILE_PATTERN.test(f.name) && f.name.toLowerCase() !== "index.html")
       .map((f) => ({
         name: f.name,
         metaUrl: `https://cdn.jsdelivr.net/gh/${repoInfo.owner}/${repoInfo.repo}@${repoInfo.branch}/${GAMES_DIR}/${encodeURIComponent(f.name)}`
@@ -445,7 +460,7 @@ a { color: inherit; }
     const items = await res.json();
     if (!Array.isArray(items)) throw new Error("beklenmeyen yanıt");
     return items
-      .filter((it) => it.type === "file" && /\.html?$/i.test(it.name) && it.name.toLowerCase() !== "index.html")
+      .filter((it) => it.type === "file" && GAME_FILE_PATTERN.test(it.name) && it.name.toLowerCase() !== "index.html")
       .map((it) => ({ name: it.name, metaUrl: it.download_url }));
   }
 
@@ -457,7 +472,7 @@ a { color: inherit; }
     const names = [...doc.querySelectorAll("a")]
       .map((a) => a.getAttribute("href") || "")
       .map((h) => decodeURIComponent(h.split("/").filter(Boolean).pop() || ""))
-      .filter((n) => /\.html?$/i.test(n) && n.toLowerCase() !== "index.html");
+      .filter((n) => GAME_FILE_PATTERN.test(n) && n.toLowerCase() !== "index.html");
     const unique = [...new Set(names)];
     return unique.map((name) => ({ name, metaUrl: `${GAMES_DIR}/${name}` }));
   }
@@ -481,31 +496,39 @@ a { color: inherit; }
   }
 
   async function buildGameEntry(fileInfo, index) {
+    const swf = isSwf(fileInfo.name);
     let title = prettify(fileInfo.name);
-    let description = "Bu oyunu başlatmak için OYNA'ya bas.";
+    let description = swf
+      ? "Ruffle ile çalışan bir Flash (.swf) oyunu. Başlatmak için OYNA'ya bas."
+      : "Bu oyunu başlatmak için OYNA'ya bas.";
     let controls = "";
 
-    try {
-      const res = await fetch(fileInfo.metaUrl);
-      if (res.ok) {
-        const html = await res.text();
-        const doc = new DOMParser().parseFromString(html, "text/html");
-        const t = doc.querySelector("title");
-        if (t && t.textContent.trim()) title = t.textContent.trim();
-        const d = doc.querySelector('meta[name="description"]');
-        if (d && d.getAttribute("content")) description = d.getAttribute("content");
-        const c = doc.querySelector('meta[name="controls"]');
-        if (c && c.getAttribute("content")) controls = c.getAttribute("content");
-      }
-    } catch (e) { console.warn("Meta bilgisi okunamadı:", fileInfo.name, e); }
+    // .swf dosyaları ikili (binary) olduğu için HTML meta etiketi
+    // aramaya gerek yok — sadece .html oyunlarında meta okunur.
+    if (!swf) {
+      try {
+        const res = await fetch(fileInfo.metaUrl);
+        if (res.ok) {
+          const html = await res.text();
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const t = doc.querySelector("title");
+          if (t && t.textContent.trim()) title = t.textContent.trim();
+          const d = doc.querySelector('meta[name="description"]');
+          if (d && d.getAttribute("content")) description = d.getAttribute("content");
+          const c = doc.querySelector('meta[name="controls"]');
+          if (c && c.getAttribute("content")) controls = c.getAttribute("content");
+        }
+      } catch (e) { console.warn("Meta bilgisi okunamadı:", fileInfo.name, e); }
+    }
 
     return {
       title, description, controls,
       tag: fileInfo.name,
       file: `${GAMES_DIR}/${fileInfo.name}`,
       accent: ACCENTS[index % ACCENTS.length],
-      icon: ICONS[index % ICONS.length],
-      isNew: index === 0
+      icon: swf ? "🕹️" : ICONS[index % ICONS.length],
+      isNew: index === 0,
+      isSwf: swf
     };
   }
 
@@ -521,7 +544,7 @@ a { color: inherit; }
     if (games.length === 0) {
       setState(
         "Henüz oyun yok",
-        "games/ klasörüne bir .html dosyası ekleyip push'la — kart burada otomatik belirecek."
+        "games/ klasörüne bir .html veya .swf dosyası ekleyip push'la — kart burada otomatik belirecek."
       );
       return;
     }
@@ -537,6 +560,7 @@ a { color: inherit; }
         <div class="game-card__thumb">${game.icon}</div>
         <div class="game-card__body">
           <h3 class="game-card__title">${escapeHtml(game.title)}</h3>
+          ${game.isSwf ? '<span class="game-card__badge">⚡ FLASH · RUFFLE</span>' : ""}
           <p class="game-card__desc">${escapeHtml(game.description)}</p>
           ${game.controls ? `<p class="game-card__controls">${escapeHtml(game.controls)}</p>` : ""}
           <p class="game-card__tag">${escapeHtml(game.tag)}</p>
@@ -583,9 +607,42 @@ a { color: inherit; }
 
   overlayFullscreenBtn.addEventListener("click", toggleFullscreen);
 
+  // .swf oyunları için: iframe'e doğrudan .swf src verilemez (tarayıcılar
+  // artık Flash'ı çalıştırmaz), bunun yerine iframe'in içine Ruffle'ı
+  // yükleyen ve .swf dosyasını bir <embed> ile gösteren küçük bir HTML
+  // belgesi enjekte ediyoruz (srcdoc). Böylece .html oyunlarındaki gibi
+  // her oyun kendi izole iframe'inde çalışmaya devam ediyor.
+  function buildSwfDocument(absoluteSwfUrl) {
+    const safeUrl = escapeHtml(absoluteSwfUrl);
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #ruffle-container { width: 100%; height: 100%; }
+  #ruffle-container embed { width: 100%; height: 100%; display: block; }
+</style>
+</head>
+<body>
+  <div id="ruffle-container">
+    <embed src="${safeUrl}" type="application/x-shockwave-flash" width="100%" height="100%" />
+  </div>
+  <script src="${RUFFLE_SRC}"><\/script>
+</body>
+</html>`;
+  }
+
   function openGame(game) {
     overlayTitle.textContent = game.title;
-    overlayScreen.src = game.file;
+    if (game.isSwf) {
+      const absoluteUrl = new URL(game.file, document.baseURI).href;
+      overlayScreen.removeAttribute("src");
+      overlayScreen.srcdoc = buildSwfDocument(absoluteUrl);
+    } else {
+      overlayScreen.removeAttribute("srcdoc");
+      overlayScreen.src = game.file;
+    }
     overlay.classList.add("is-open");
     document.body.style.overflow = "hidden";
     overlayCloseBtn.focus();
@@ -594,6 +651,7 @@ a { color: inherit; }
   function closeGame() {
     if (isFs()) exitFs();
     overlay.classList.remove("is-open");
+    overlayScreen.removeAttribute("srcdoc");
     overlayScreen.src = "about:blank";
     document.body.style.overflow = "";
   }
