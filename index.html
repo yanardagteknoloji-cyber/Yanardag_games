@@ -55,9 +55,10 @@ a { color: inherit; }
 }
 
 .banner__logo-img {
-  width: 88px;
-  height: 88px;
-  object-fit: cover;
+  height: 128px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
   display: block;
   margin: 0 auto 1rem;
   border-radius: 12px;
@@ -557,7 +558,6 @@ a { color: inherit; }
           <h3 class="game-card__title">${escapeHtml(game.title)}</h3>
           <p class="game-card__desc">${escapeHtml(game.description)}</p>
           ${game.controls ? `<p class="game-card__controls">${escapeHtml(game.controls)}</p>` : ""}
-          <p class="game-card__tag">${escapeHtml(game.tag)}</p>
           <button class="play-btn" type="button">OYNA</button>
         </div>
       `;
