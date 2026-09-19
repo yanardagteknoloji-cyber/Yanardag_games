@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ÇizBozz — Çiz, Bozdur, Gül</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+/* jsdelivr açılmazsa yedek CDN'leri sırayla dene (her biri için 6 sn zaman aşımı) */
+(function(){
+  if(typeof Peer!=='undefined') return;
+  var srcs=['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js','https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'];
+  window.__peerLoading=true;
+  (function next(i){
+    if(typeof Peer!=='undefined'||i>=srcs.length){ window.__peerLoading=false; return; }
+    var sc=document.createElement('script'), moved=false;
+    var go=function(){ if(moved) return; moved=true; clearTimeout(t); next(i+1); };
+    var t=setTimeout(function(){ if(typeof Peer==='undefined') go(); },6000);
+    sc.src=srcs[i];
+    sc.onload=function(){ if(moved) return; moved=true; clearTimeout(t); window.__peerLoading=false; };
+    sc.onerror=go;
+    document.head.appendChild(sc);
+  })(0);
+})();
+</script>
+<style>
+:root{
+  --paper:#F2EBDD; --paper2:#E9DFCB; --ink:#1E2A4A; --ink2:#37456e;
+  --rose:#FF4D6D; --sun:#FFC53D; --teal:#2EC4B6; --white:#FFFCF5;
+  --shadow: 0 5px 0 var(--ink);
+  --r: 18px;
+}
+:root[data-theme="dark"]{
+  --paper:#171E36; --paper2:#1F2848; --ink:#F2EBDD; --ink2:#c9c2b3; --white:#232D52;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--paper);color:var(--ink);
+  font-family:'Nunito','Trebuchet MS','Segoe UI',system-ui,sans-serif;font-weight:700;overflow-x:hidden}
+body{
+  background-image:
+    radial-gradient(circle at 1px 1px, color-mix(in srgb,var(--ink) 14%, transparent) 1.5px, transparent 0);
+  background-size:26px 26px;
+}
+h1,h2,h3,.display{font-family:'Bagel Fat One','Arial Rounded MT Bold','Trebuchet MS',system-ui,sans-serif;font-weight:400;letter-spacing:.5px;margin:0}
+button{font-family:inherit;font-weight:800;cursor:pointer;color:var(--ink)}
+input,select,textarea{font-family:inherit;font-weight:800;color:var(--ink)}
+:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+
+.screen{display:none;min-height:100%;padding:18px;animation:none}
+.screen.active{display:block}
+.wrap{max-width:1080px;margin:0 auto}
+
+/* sticker card */
+.card{background:var(--white);border:3px solid var(--ink);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
+.card.tilt1{transform:rotate(-.6deg)} .card.tilt2{transform:rotate(.6deg)}
+.btn{background:var(--sun);border:3px solid var(--ink);border-radius:14px;padding:12px 20px;font-size:18px;box-shadow:0 4px 0 var(--ink);transition:transform .08s, box-shadow .08s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+.btn.rose{background:var(--rose);color:#fff}
+.btn.teal{background:var(--teal)}
+.btn.ghost{background:var(--white)}
+.btn.big{font-size:22px;padding:15px 26px;width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.field{width:100%;padding:12px 14px;border:3px solid var(--ink);border-radius:12px;background:var(--white);font-size:18px}
+label.lbl{display:block;font-size:14px;margin:0 0 6px;color:var(--ink2)}
+
+/* ============ HOME ============ */
+.logo{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 0 22px}
+.logo .word{font-size:clamp(46px,9vw,84px);line-height:.95;display:flex}
+.logo .word span{display:inline-block;-webkit-text-stroke:3px var(--ink);paint-order:stroke fill;text-shadow:0 5px 0 var(--ink)}
+.logo .word span:nth-child(1){color:var(--rose);transform:rotate(-6deg)}
+.logo .word span:nth-child(2){color:var(--sun);transform:rotate(3deg)}
+.logo .word span:nth-child(3){color:var(--teal);transform:rotate(-3deg)}
+.logo .word span:nth-child(4){color:var(--white);transform:rotate(5deg)}
+.logo .word span:nth-child(5){color:var(--rose);transform:rotate(-4deg);margin-left:0}
+.logo .word span:nth-child(6){color:var(--sun);transform:rotate(4deg)}
+.logo .word span:nth-child(7){color:var(--teal);transform:rotate(-5deg)}
+.logo .word span:nth-child(8){color:var(--white);transform:rotate(3deg)}
+.tagline{text-align:center;margin:-8px 0 26px;font-size:18px;color:var(--ink2)}
+.home-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:22px;align-items:start}
+@media(max-width:820px){.home-grid{grid-template-columns:1fr}}
+.avatar-stage{display:flex;flex-direction:column;align-items:center;gap:14px}
+.avatar-big{width:150px;height:150px;border:4px solid var(--ink);border-radius:50%;background:var(--paper2);box-shadow:var(--shadow);overflow:hidden;display:grid;place-items:center}
+.avatar-big svg{width:100%;height:100%}
+.avatar-nav{display:flex;align-items:center;gap:12px}
+.avatar-nav .btn{padding:8px 16px;font-size:20px}
+.swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.sw{width:32px;height:32px;border-radius:50%;border:3px solid var(--ink);cursor:pointer;padding:0}
+.sw.sel{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink)}
+.face-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%}
+.face-opt{aspect-ratio:1;border:3px solid var(--ink);border-radius:12px;background:var(--paper2);padding:2px;cursor:pointer;overflow:hidden}
+.face-opt svg{width:100%;height:100%}
+.face-opt.sel{background:var(--sun);box-shadow:0 3px 0 var(--ink)}
+.or-sep{text-align:center;margin:14px 0;color:var(--ink2);font-size:14px}
+.code-row{display:flex;gap:10px}
+.code-row .field{text-transform:uppercase;letter-spacing:6px;text-align:center;font-size:24px}
+.invite-banner{background:var(--sun);border:3px solid var(--ink);border-radius:14px;padding:10px 14px;margin-bottom:14px;box-shadow:0 4px 0 var(--ink);line-height:1.35;animation:pop .4s cubic-bezier(.3,1.6,.5,1)}
+.invite-banner b{font-family:'Bagel Fat One',system-ui,sans-serif;letter-spacing:3px;font-weight:400}
+.net-note{margin-top:14px;padding:10px 12px;border:2px dashed var(--ink);border-radius:12px;font-size:13px;line-height:1.4;color:var(--ink2)}
+.net-note b{color:var(--ink)}
+.net-note code{background:var(--paper2);padding:1px 6px;border-radius:6px}
+.mode-pick{display:flex;gap:8px;margin-bottom:12px}
+.mode-pick .btn{flex:1;font-size:15px;padding:9px 6px;background:var(--white)}
+.mode-pick .btn.on{background:var(--teal)}
+.topbar-mini{position:absolute;top:12px;right:12px;display:flex;gap:8px;z-index:50}
+.round-btn{width:44px;height:44px;border-radius:50%;border:3px solid var(--ink);background:var(--white);box-shadow:0 3px 0 var(--ink);font-size:20px;display:grid;place-items:center;padding:0}
+
+/* ============ LOBBY ============ */
+.lobby-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:22px}
+@media(max-width:900px){.lobby-grid{grid-template-columns:1fr}}
+.room-code{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--ink);color:var(--paper);border-radius:14px;padding:12px 16px;margin-bottom:14px}
+:root[data-theme="dark"] .room-code{background:var(--paper2);color:var(--ink)}
+.room-code .c{font-family:'Bagel Fat One',system-ui,sans-serif;font-size:clamp(32px,9vw,42px);letter-spacing:clamp(4px,1.6vw,8px)}
+.room-code small{opacity:.75;display:block;font-size:12px}
+.players{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px}
+.pl{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:3px solid var(--ink);border-radius:14px;background:var(--white);position:relative;text-align:center;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+.pl .av{width:64px;height:64px;border:3px solid var(--ink);border-radius:50%;overflow:hidden;background:var(--paper2)}
+.pl .av svg{width:100%;height:100%}
+.pl .nm{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl.host::after{content:"👑";position:absolute;top:-14px;right:-4px;font-size:22px;transform:rotate(15deg)}
+.pl.me{background:var(--sun)}
+.pl.off{opacity:.4}
+.adm-btn{position:absolute;top:-8px;left:-8px;width:28px;height:28px;border-radius:50%;border:3px solid var(--ink);background:var(--white);font-size:16px;line-height:1;padding:0;box-shadow:0 2px 0 var(--ink);display:grid;place-items:center}
+.adm-btn:hover{background:var(--sun)}
+.adm-menu{position:fixed;z-index:180;background:var(--white);border:3px solid var(--ink);border-radius:14px;box-shadow:0 5px 0 var(--ink);padding:6px;min-width:190px;animation:pop .18s cubic-bezier(.3,1.6,.5,1)}
+.adm-menu .h{font-size:12px;color:var(--ink2);padding:4px 10px 6px;border-bottom:2px dashed color-mix(in srgb,var(--ink) 25%,transparent);margin-bottom:4px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.adm-menu button{display:flex;width:100%;gap:8px;align-items:center;text-align:left;background:transparent;border:0;border-radius:10px;padding:9px 10px;font-size:15px}
+.adm-menu button:hover{background:var(--paper2)}
+.adm-menu button.danger{color:#d61f45}
+
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.mode{border:3px solid var(--ink);border-radius:14px;padding:10px;background:var(--white);cursor:pointer;text-align:left;box-shadow:0 3px 0 var(--ink);transition:transform .08s;display:flex;flex-direction:column;gap:2px}
+.mode:hover{transform:translateY(-2px)}
+.mode .e{font-size:26px}
+.mode .t{font-size:15px;font-weight:900}
+.mode .d{font-size:11px;color:var(--ink2);font-weight:700;line-height:1.25}
+.mode.sel{background:var(--teal);box-shadow:0 3px 0 var(--ink), inset 0 0 0 2px var(--white)}
+.mode.sel .d{color:var(--ink)}
+.mode[disabled]{cursor:default}
+.mode[disabled]:hover{transform:none}
+.chain-pick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.chain-pick .btn{padding:8px 0;font-size:20px;background:var(--white)}
+.chain-pick .btn.on{background:var(--teal)}
+.chain-pick .btn[disabled]{opacity:.6;cursor:default;transform:none}
+.chain-hint{font-size:12px;color:var(--ink2);margin-top:8px;line-height:1.35}
+.link .who .ch{font-size:10px;opacity:.7}
+.settings-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.hint-host{font-size:13px;color:var(--ink2);text-align:center;margin-top:10px}
+
+/* ============ GAME ============ */
+#screen-game{padding:0}
+.game-top{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--ink);color:var(--paper);position:sticky;top:0;z-index:20}
+:root[data-theme="dark"] .game-top{background:var(--paper2);color:var(--ink)}
+.game-top .round{font-family:'Bagel Fat One',system-ui,sans-serif;font-size:20px}
+.timer-bar{flex:1;height:16px;border-radius:99px;background:rgba(255,255,255,.2);overflow:hidden;border:2px solid var(--paper)}
+:root[data-theme="dark"] .timer-bar{border-color:var(--ink);background:rgba(0,0,0,.25)}
+.timer-bar i{display:block;height:100%;width:100%;background:var(--teal);transform-origin:left;transition:background .3s}
+.timer-bar.low i{background:var(--rose)}
+.timer-num{font-family:'Bagel Fat One',system-ui,sans-serif;font-size:22px;min-width:38px;text-align:right}
+.game-body{max-width:960px;margin:0 auto;padding:14px}
+.prompt-box{text-align:center;margin:6px 0 12px}
+.prompt-box .cap{font-size:14px;color:var(--ink2);margin-bottom:4px}
+.prompt-box .txt{font-family:'Bagel Fat One',system-ui,sans-serif;font-size:clamp(24px,5vw,40px);line-height:1.1;background:var(--sun);display:inline-block;padding:8px 18px;border:3px solid var(--ink);border-radius:14px;box-shadow:var(--shadow);transform:rotate(-1deg);max-width:100%;word-break:break-word}
+.write-card{max-width:640px;margin:20px auto}
+.write-card textarea{width:100%;min-height:96px;resize:none;padding:14px;border:3px solid var(--ink);border-radius:14px;font-size:22px;background:var(--white)}
+.write-card .under{display:flex;justify-content:space-between;font-size:13px;color:var(--ink2);margin:6px 2px 12px}
+.draw-layout{display:grid;grid-template-columns:auto 1fr;gap:10px}
+@media(max-width:700px){.draw-layout{grid-template-columns:1fr}}
+.tools{display:flex;flex-direction:column;gap:8px;background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:8px;box-shadow:0 4px 0 var(--ink);align-self:start}
+@media(max-width:700px){.tools{flex-direction:row;flex-wrap:wrap;justify-content:center}}
+.tool svg{pointer-events:none;display:block}
+.tool{color:var(--ink);width:46px;height:46px;border:3px solid var(--ink);border-radius:12px;background:var(--paper2);display:grid;place-items:center;font-size:22px;padding:0;position:relative}
+.tool.on{background:var(--sun);box-shadow:0 3px 0 var(--ink);transform:translateY(-2px)}
+.tool[disabled]{opacity:.35}
+.canvas-wrap{position:relative;border:4px solid var(--ink);border-radius:14px;background:#fff;box-shadow:var(--shadow);overflow:hidden;touch-action:none;line-height:0}
+.canvas-wrap canvas{width:100%;height:auto;display:block;touch-action:none;cursor:crosshair;background:#fff}
+.canvas-wrap.blind::after{content:"🙈 Kör mod: çizimini göremezsin!";position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:var(--paper);font-family:'Bagel Fat One',system-ui,sans-serif;font-size:clamp(20px,4vw,32px);line-height:1.2;text-align:center;padding:20px;pointer-events:none;opacity:1}
+.canvas-wrap.blind.reveal::after{display:none}
+.palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
+.pc{width:34px;height:34px;border:3px solid var(--ink);border-radius:50%;padding:0}
+.pc.sel{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink);transform:scale(1.05)}
+.pc.custom{background:conic-gradient(red,yellow,lime,aqua,blue,magenta,red);position:relative;overflow:hidden}
+.pc.custom input{position:absolute;inset:-10px;opacity:0;cursor:pointer;width:60px;height:60px}
+.size-row{display:flex;align-items:center;gap:10px;margin-top:10px;background:var(--white);border:3px solid var(--ink);border-radius:14px;padding:8px 14px;box-shadow:0 4px 0 var(--ink)}
+.size-row input[type=range]{flex:1;accent-color:var(--rose)}
+.size-dot{width:34px;height:34px;display:grid;place-items:center}
+.size-dot i{display:block;border-radius:50%;background:var(--ink)}
+.done-bar{display:flex;gap:10px;margin-top:14px}
+.done-bar .btn{flex:1}
+.waitbox{max-width:560px;margin:40px auto;text-align:center}
+.waitbox .big{font-size:56px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-8px) rotate(4deg)}}
+.dots{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px}
+.dot{display:flex;align-items:center;gap:6px;background:var(--white);border:2px solid var(--ink);border-radius:99px;padding:3px 10px 3px 3px;font-size:13px}
+.dot .av{width:26px;height:26px;border-radius:50%;overflow:hidden;border:2px solid var(--ink)}
+.dot .av svg{width:100%;height:100%}
+.dot.ok{background:var(--teal)}
+.dot.ok::after{content:"✓";font-weight:900}
+.see-img{border:4px solid var(--ink);border-radius:14px;background:#fff;box-shadow:var(--shadow);overflow:hidden;max-width:560px;margin:0 auto;line-height:0}
+.see-img img,.see-img canvas{width:100%;height:auto;display:block}
+
+/* ============ REVEAL ============ */
+.rev-head{text-align:center;margin:10px 0 18px}
+.rev-head h2{font-size:clamp(26px,5vw,42px)}
+.rev-owner{display:inline-flex;align-items:center;gap:8px;background:var(--white);border:3px solid var(--ink);border-radius:99px;padding:4px 14px 4px 4px;margin-top:8px}
+.rev-owner .av{width:36px;height:36px;border-radius:50%;overflow:hidden;border:2px solid var(--ink)}
+.rev-owner .av svg{width:100%;height:100%}
+.chain{display:flex;flex-direction:column;gap:14px;max-width:640px;margin:0 auto}
+.link{display:flex;gap:10px;align-items:flex-start;animation:slideIn .45s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes slideIn{from{opacity:0;transform:translateY(22px) scale(.96)}to{opacity:1;transform:none}}
+.link .who{flex:0 0 54px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;text-align:center}
+.link .who .av{width:48px;height:48px;border-radius:50%;overflow:hidden;border:3px solid var(--ink);background:var(--paper2)}
+.link .who .av svg{width:100%;height:100%}
+.link .bubble{flex:1;min-width:0}
+.link.text .bubble{background:var(--white);border:3px solid var(--ink);border-radius:6px 18px 18px 18px;padding:12px 16px;box-shadow:0 4px 0 var(--ink);font-size:20px;word-break:break-word}
+.link.text.first .bubble{background:var(--sun);font-family:'Bagel Fat One',system-ui,sans-serif;font-size:24px}
+.link.draw .bubble{border:3px solid var(--ink);border-radius:6px 18px 18px 18px;background:#fff;box-shadow:0 4px 0 var(--ink);overflow:hidden;line-height:0}
+.link.draw img{width:100%;display:block}
+.link.skipped .bubble{padding:14px;text-align:center;font-size:15px;color:var(--ink2);border:3px dashed var(--ink);border-radius:14px;background:transparent}
+.rev-controls{display:flex;gap:10px;max-width:640px;margin:20px auto;justify-content:center;flex-wrap:wrap}
+.album-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:14px}
+.album-tab{display:flex;align-items:center;gap:6px;border:3px solid var(--ink);border-radius:99px;background:var(--white);padding:3px 12px 3px 3px;font-size:14px}
+.album-tab .av{width:28px;height:28px;border-radius:50%;overflow:hidden;border:2px solid var(--ink)}
+.album-tab .av svg{width:100%;height:100%}
+.album-tab.on{background:var(--rose);color:#fff}
+
+
+/* ============ SES PANELİ ============ */
+.snd-panel{position:fixed;top:64px;right:12px;width:min(330px,calc(100vw - 24px));z-index:60;display:none;padding:16px 18px}
+.snd-panel.show{display:block;animation:pop .25s cubic-bezier(.3,1.6,.5,1)}
+.snd-panel h3{font-size:22px;margin-bottom:10px}
+.snd-row{display:flex;align-items:center;gap:10px;margin:10px 0}
+.snd-row .nm{flex:0 0 64px;font-size:14px}
+.snd-row input[type=range]{flex:1;min-width:0;accent-color:var(--rose)}
+.snd-row .tg{flex:0 0 auto;min-width:62px;padding:6px 10px;font-size:13px;border:3px solid var(--ink);border-radius:10px;background:var(--paper2);box-shadow:0 3px 0 var(--ink)}
+.snd-row .tg.on{background:var(--teal)}
+.snd-sep{height:0;border-top:3px dashed var(--ink);opacity:.25;margin:14px 0}
+.mp3-box{display:flex;flex-direction:column;gap:8px}
+.mp3-box .now{font-size:13px;color:var(--ink2);word-break:break-all;min-height:18px}
+.mp3-box .row2{display:flex;gap:8px;flex-wrap:wrap}
+.mp3-box .btn{padding:8px 12px;font-size:14px;flex:1;min-width:0}
+.priv{font-size:12px;color:var(--ink2);line-height:1.35;border:2px dashed var(--ink);border-radius:10px;padding:8px 10px}
+.priv b{color:var(--ink)}
+#mp3File{display:none}
+
+
+#screen-lobby,#screen-reveal{padding-top:66px}
+@media(max-width:600px){
+  .topbar-mini{top:8px;right:8px;gap:6px}
+  .round-btn{width:38px;height:38px;font-size:17px}
+  #screen-home{padding-top:58px}
+  #screen-lobby,#screen-reveal{padding-top:58px}
+  .game-top{padding-right:14px}
+  .snd-panel{top:54px}
+}
+
+/* toast + modal */
+#toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:14px;border:3px solid var(--paper);z-index:200;transition:transform .3s cubic-bezier(.3,1.5,.5,1);max-width:90vw;text-align:center}
+:root[data-theme="dark"] #toast{background:var(--paper2);color:var(--ink);border-color:var(--ink)}
+#toast.show{transform:translate(-50%,0)}
+.modal{position:fixed;inset:0;background:rgba(20,26,50,.6);display:none;place-items:center;z-index:150;padding:18px}
+.modal.show{display:grid}
+.modal .card{max-width:520px;width:100%;max-height:88vh;overflow:auto}
+.modal h3{font-size:26px;margin-bottom:10px}
+.modal ul{padding-left:20px;line-height:1.55;margin:8px 0}
+.conf{position:fixed;pointer-events:none;z-index:300;font-size:26px;animation:fall 2.4s ease-in forwards}
+@keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.8}}
+body.ingame #btnHelp,body.ingame #btnTheme{display:none}
+body.ingame .topbar-mini{position:fixed;top:auto;bottom:14px;right:12px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="topbar-mini">
+  <button class="round-btn" id="btnSound" title="Ses ve müzik" aria-label="Ses ve müzik ayarları">🔊</button>
+  <button class="round-btn" id="btnTheme" title="Tema" aria-label="Tema değiştir">🌙</button>
+  <button class="round-btn" id="btnHelp" title="Nasıl oynanır" aria-label="Nasıl oynanır">?</button>
+</div>
+
+
+<div class="snd-panel card" id="sndPanel" role="dialog" aria-label="Ses ayarları">
+  <h3>Ses ve müzik</h3>
+  <div class="snd-row"><span class="nm">Efektler</span><input type="range" id="volSfx" min="0" max="100" value="70" aria-label="Efekt sesi"><button class="tg on" id="tgSfx">Açık</button></div>
+  <div class="snd-row"><span class="nm">Müzik</span><input type="range" id="volMus" min="0" max="100" value="35" aria-label="Müzik sesi"><button class="tg on" id="tgMus">Açık</button></div>
+  <div class="snd-sep"></div>
+  <div class="mp3-box">
+    <div style="font-size:15px">Kendi müziğin</div>
+    <div class="now" id="mp3Now">Dosya seçilmedi. Şu an oyunun müziği çalıyor.</div>
+    <input type="file" id="mp3File" accept="audio/*,.mp3,.m4a,.wav,.ogg" aria-label="MP3 dosyası seç">
+    <div class="row2">
+      <button class="btn teal" id="mp3Pick">MP3 seç</button>
+      <button class="btn ghost" id="mp3Clear" disabled>Kaldır</button>
+    </div>
+    <div class="priv"><b>Sadece sen duyarsın.</b> Seçtiğin dosya cihazından çıkmaz, diğer oyunculara gönderilmez. Sayfa yenilenirse tekrar seçmen gerekir.</div>
+  </div>
+</div>
+
+<section class="screen active" id="screen-home">
+  <div class="wrap">
+    <div class="logo"><div class="word" aria-label="ÇizBozz"><span>Ç</span><span>i</span><span>z</span><span>B</span><span>o</span><span>z</span><span>z</span></div></div>
+    <p class="tagline">by yanardağ</p>
+    <div class="home-grid">
+      <div class="card tilt1">
+        <div class="avatar-stage">
+          <div class="avatar-big" id="avBig"></div>
+          <div class="avatar-nav">
+            <button class="btn" id="avPrev" aria-label="Önceki yüz">◀</button>
+            <button class="btn ghost" id="avRand" aria-label="Rastgele">🎲</button>
+            <button class="btn" id="avNext" aria-label="Sonraki yüz">▶</button>
+          </div>
+          <div class="face-picker" id="facePicker"></div>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div style="margin-top:16px">
+          <label class="lbl" for="inName">Takma adın</label>
+          <input class="field" id="inName" maxlength="14" placeholder="Örn. Pixel Paşa" autocomplete="off">
+        </div>
+      </div>
+      <div class="card tilt2">
+        <div id="inviteBanner" class="invite-banner" style="display:none">🎉 Davet edildin! Oda: <b></b><br><small>Adını yazıp <b>Katıl</b>'a bas.</small></div>
+        <h3 style="font-size:28px;margin-bottom:12px">Oyuna gir</h3>
+        <button class="btn rose big" id="btnCreate">Oda kur</button>
+        <div class="or-sep">— veya kodla katıl —</div>
+        <div class="code-row">
+          <input class="field" id="inCode" maxlength="5" placeholder="KOD" autocomplete="off" aria-label="Oda kodu">
+          <button class="btn teal" id="btnJoin">Katıl</button>
+        </div>
+        <div class="net-note" id="fileWarn" style="display:none;border-color:var(--rose);color:var(--ink)">⚠️ Bu sayfa dosya olarak açılmış (<code>file://</code>). Arkadaşların bağlanamaz: dosyayı GitHub Pages / Netlify gibi bir siteye yükleyip linkini paylaşman gerekir.</div>
+        <div class="net-note" style="margin-top:10px">Herkes <b>kendi cihazından</b> oynar. Oda kuran kişi kodu arkadaşlarına gönderir, onlar da kodu girerek katılır. Telefon, tablet ve bilgisayar birlikte oynayabilir.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section class="screen" id="screen-lobby">
+  <div class="wrap">
+    <div class="lobby-grid">
+      <div class="card tilt1">
+        <div class="room-code">
+          <div><small>Oda kodu</small><div class="c" id="lobbyCode">-----</div></div>
+          <button class="btn" id="btnCopy" style="padding:8px 14px;font-size:15px;white-space:nowrap" aria-label="Oda kodunu kopyala">Kopyala</button>
+        </div>
+        <button class="btn ghost" id="btnCopyLink" style="width:100%;margin:-4px 0 14px;font-size:15px;padding:9px">🔗 Davet gönder (link + kod)</button>
+        <h3 style="margin-bottom:10px;font-size:22px">Oyuncular <span id="plCount" style="opacity:.6"></span></h3>
+        <div class="players" id="players"></div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn ghost" id="btnLeave" style="flex:1">Ayrıl</button>
+        </div>
+      </div>
+      <div class="card tilt2">
+        <h3 style="font-size:24px;margin-bottom:10px">Oyun modu</h3>
+        <div class="modes" id="modes"></div>
+        <div style="margin-top:12px">
+          <label class="lbl" for="setChains">Bir turda kaç zincir?</label>
+          <div class="chain-pick" id="chainPick" role="radiogroup" aria-label="Zincir sayısı">
+            <button class="btn" data-c="1" role="radio">1</button>
+            <button class="btn" data-c="2" role="radio">2</button>
+            <button class="btn" data-c="3" role="radio">3</button>
+            <button class="btn" data-c="4" role="radio">4</button>
+          </div>
+          <div class="chain-hint" id="chainHint"></div>
+        </div>
+        <div class="settings-row" id="settingsRow">
+          <div><label class="lbl" for="setDraw">Çizim süresi</label>
+            <select class="field" id="setDraw"><option value="30">30 sn</option><option value="60" selected>60 sn</option><option value="90">90 sn</option><option value="120">120 sn</option><option value="0">Sınırsız</option></select></div>
+          <div><label class="lbl" for="setWrite">Yazma süresi</label>
+            <select class="field" id="setWrite"><option value="20">20 sn</option><option value="30" selected>30 sn</option><option value="45">45 sn</option><option value="60">60 sn</option><option value="0">Sınırsız</option></select></div>
+        </div>
+        <div style="margin-top:16px"><button class="btn rose big" id="btnStart">Oyunu başlat</button></div>
+        <div class="hint-host" id="hintHost"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GAME -->
+<section class="screen" id="screen-game">
+  <div class="game-top">
+    <div class="round" id="gRound">Tur 1/4</div>
+    <div class="timer-bar" id="gBar"><i></i></div>
+    <div class="timer-num" id="gNum">60</div>
+  </div>
+  <div class="game-body" id="gBody"></div>
+</section>
+
+<!-- REVEAL -->
+<section class="screen" id="screen-reveal">
+  <div class="wrap">
+    <div class="rev-head">
+      <h2 id="revTitle">Sonuçlar</h2>
+      <div id="revOwner"></div>
+    </div>
+    <div class="album-tabs" id="albumTabs"></div>
+    <div class="chain" id="chain"></div>
+    <div class="rev-controls" id="revControls"></div>
+  </div>
+</section>
+
+<!-- modals -->
+<div class="modal" id="helpModal">
+  <div class="card">
+    <h3>Nasıl oynanır?</h3>
+    <ul>
+      <li>Herkes gizli bir cümle yazar.</li>
+      <li>Sonra cümleler sağdakine geçer: gelen cümleyi <b>çizersin</b>.</li>
+      <li>Bir sonraki kişi senin çizimine bakıp ne olduğunu <b>tahmin edip yazar</b>.</li>
+      <li>Zincir böyle sürer. En sonda tüm albümler açılır ve nasıl bozulduğu görülür.</li>
+    </ul>
+    <button class="btn big" onclick="$('#helpModal').classList.remove('show')">Anladım</button>
+  </div>
+</div>
+<div class="modal" id="netErrModal">
+  <div class="card">
+    <h3 id="neTitle">Bağlantı sorunu</h3>
+    <p id="neMsg" style="margin:6px 0 10px;line-height:1.4"></p>
+    <ul style="font-size:14px;color:var(--ink2)">
+      <li>Sayfanın <b>https://</b> ile (GitHub Pages, Netlify vb.) açıldığından emin ol.</li>
+      <li>VPN, reklam engelleyici ya da kurumsal ağ bağlantıyı engelleyebilir.</li>
+      <li>Sayfayı yenileyip tekrar dene.</li>
+    </ul>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn" id="neRetry" style="flex:1">Tekrar dene</button>
+      <button class="btn ghost" id="neClose" style="flex:1">Kapat</button>
+    </div>
+    <details style="margin-top:12px;font-size:12px;color:var(--ink2)"><summary>Teknik bilgi</summary><pre id="neTech" style="white-space:pre-wrap;word-break:break-word;margin:6px 0 0"></pre></details>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script>
+/* =========================================================
+   ÇizBozz — tek dosyalık Gartic Phone benzeri oyun
+   Ağ: PeerJS (WebRTC) yıldız topoloji — host merkezi.
+   Yerel mod: BroadcastChannel (aynı tarayıcı sekmeleri).
+   ========================================================= */
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+const rnd = n=>Math.floor(Math.random()*n);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------- Avatar (SVG, yüz + renk) ---------- */
+const AV_COLORS=['#FF4D6D','#FFC53D','#2EC4B6','#8E7DFF','#FF8A3D','#5BC0EB','#9BE564','#F49AC2'];
+const FACES=[
+ (c)=>`<circle cx="35" cy="42" r="5" fill="#1E2A4A"/><circle cx="65" cy="42" r="5" fill="#1E2A4A"/><path d="M32 62 Q50 78 68 62" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ (c)=>`<path d="M28 44 Q35 36 42 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M58 44 Q65 36 72 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="68" rx="10" ry="8" fill="#1E2A4A"/>`,
+ (c)=>`<circle cx="35" cy="42" r="8" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="65" cy="42" r="8" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="37" cy="44" r="3.5" fill="#1E2A4A"/><circle cx="63" cy="44" r="3.5" fill="#1E2A4A"/><path d="M36 68 L64 68" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/>`,
+ (c)=>`<path d="M28 40 L42 46 M28 46 L42 40" stroke="#1E2A4A" stroke-width="4" stroke-linecap="round"/><path d="M58 40 L72 46 M58 46 L72 40" stroke="#1E2A4A" stroke-width="4" stroke-linecap="round"/><path d="M34 70 Q42 60 50 70 Q58 60 66 70" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+ (c)=>`<rect x="24" y="36" width="20" height="14" rx="6" fill="#1E2A4A"/><rect x="56" y="36" width="20" height="14" rx="6" fill="#1E2A4A"/><path d="M44 43 L56 43" stroke="#1E2A4A" stroke-width="3"/><path d="M34 64 Q50 76 66 64" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ (c)=>`<circle cx="35" cy="44" r="4.5" fill="#1E2A4A"/><path d="M58 44 Q65 38 72 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M34 64 Q50 80 68 60" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M62 66 Q66 78 72 68" fill="#ff8fa3" stroke="#1E2A4A" stroke-width="2"/>`,
+ (c)=>`<path d="M30 44 Q36 34 42 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M58 44 Q64 34 70 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M30 62 Q50 84 70 62 Z" fill="#fff" stroke="#1E2A4A" stroke-width="4" stroke-linejoin="round"/>`,
+ (c)=>`<circle cx="35" cy="44" r="5" fill="#1E2A4A"/><circle cx="65" cy="44" r="5" fill="#1E2A4A"/><circle cx="26" cy="58" r="6" fill="#ff8fa3" opacity=".7"/><circle cx="74" cy="58" r="6" fill="#ff8fa3" opacity=".7"/><path d="M42 62 Q50 70 58 62" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+ (c)=>`<path d="M26 46 L44 46" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M56 46 L74 46" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M36 70 Q50 60 64 70" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ (c)=>`<text x="35" y="52" font-size="22" text-anchor="middle" fill="#1E2A4A" font-family="Arial" font-weight="900">★</text><text x="65" y="52" font-size="22" text-anchor="middle" fill="#1E2A4A" font-family="Arial" font-weight="900">★</text><ellipse cx="50" cy="70" rx="9" ry="7" fill="#1E2A4A"/>`,
+ (c)=>`<circle cx="35" cy="42" r="5" fill="#1E2A4A"/><circle cx="65" cy="42" r="5" fill="#1E2A4A"/><path d="M40 66 Q50 58 60 66" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M50 30 L50 20 M44 22 L50 16 L56 22" stroke="#1E2A4A" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+ (c)=>`<path d="M28 44 Q35 50 42 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M58 44 Q65 50 72 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M36 66 Q50 74 64 66" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`
+];
+function avatarSVG(a){
+  const face=FACES[a.face%FACES.length](a.color);
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="${AV_COLORS[a.color%AV_COLORS.length]}"/>${face}</svg>`;
+}
+
+/* ---------- Cihaz kimliği (ban için): tarayıcıda kalıcı rastgele token ---------- */
+function deviceToken(){
+  try{ let t=localStorage.getItem('cizbozz-dev'); if(!t){ t=(crypto.getRandomValues?Array.from(crypto.getRandomValues(new Uint8Array(12))).map(b=>b.toString(16).padStart(2,'0')).join(''):Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)); localStorage.setItem('cizbozz-dev',t);} return t; }
+  catch(e){ return 'nostore-'+Math.random().toString(36).slice(2); }
+}
+const DEV=deviceToken();
+
+/* ---------- Durum ---------- */
+let me = { name:'', avatar:{face:rnd(FACES.length),color:rnd(AV_COLORS.length)}, id:null };
+try{ const s=JSON.parse(localStorage.getItem('cizbozz-me')||'null'); if(s){me.name=s.name||'';me.avatar=s.avatar||me.avatar;} }catch(e){}
+let net=null;            // {send(toId,msg), broadcast(msg), close()}
+let isHost=false;
+let room=null;           // HERKESTE: arayüzün okuduğu görünüm (aynı)
+let HOST=null;           // SADECE host'ta: yetkili tam durum (albümler dahil)
+let myId=null;
+const S={ // oyun içi yerel durum
+  tool:'pen', color:'#1E2A4A', size:6, strokes:[], redo:[], drawing:false,
+  timerEnd:0, timerTotal:0, timerHandle:null, submitted:false, phase:null
+};
+
+/* ---------- Modlar ---------- */
+const MODES=[
+ {id:'normal', e:'✏️', t:'Normal', d:'Yaz → çiz → tahmin et → çiz…'},
+ {id:'bilgi',  e:'🤔', t:'Bilgi', d:'Yazıyla değil, serbest bir çizimle başlar. Sonra tahmin et → çiz…'},
+ {id:'hizli',  e:'⚡', t:'Hızlı', d:'Süreler yarıya iner. Acele et!'},
+ {id:'kor',    e:'🙈', t:'Kör', d:'Çizimini göremezsin, sadece hisset.'},
+ {id:'tek',    e:'🖍️', t:'Tek renk', d:'Tüm çizimler tek renkle.'},
+ {id:'tersyz', e:'🔄', t:'Ters', d:'Tuval aynalı: sağa çizersen sola gider!'},
+ {id:'sessiz', e:'🤫', t:'Sessiz', d:'Yazı yok: herkes bir öncekinin çizimini devam ettirir.'},
+ {id:'kisa',   e:'🎯', t:'Kısa zincir', d:'Sadece 3 adım. Hızlı biter.'},
+ {id:'karma',  e:'🎲', t:'Karma', d:'Her tur rastgele bir mod!'},
+];
+const PROMPTS=['Uçan bir kedi','Dişlerini fırçalayan köpek balığı','Kayan bir muz','Roket süren dede','Pizzaya âşık robot','Şapkalı bir salyangoz','Traktörü kovalayan tavuk','Bulut üstünde piknik','Dans eden çorap','Yemek yiyen kaktüs','Denizaltıdaki kedi','Sinirli bir yumurta','Sörf yapan ördek','Bisiklet süren zürafa','Uykucu bir ejderha','Ay’a giden inek','Gözlüklü bir balık','Kendini tıraş eden yeti','Uzay gemisinde çay','Kavun taşıyan karınca','Konser veren kurbağa','Yağmurda şemsiyesiz fil','Pijamalı vampir','Dev bir simit','Patenli tavşan'];
+
+/* ---------- Yardımcı: ekran ---------- */
+function show(id){ $$('.screen').forEach(s=>s.classList.remove('active')); $('#screen-'+id).classList.add('active'); document.body.classList.toggle('ingame',id==='game'); window.scrollTo(0,0); }
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2600); }
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function confetti(n=40){ const em=['🎉','✨','🎨','⭐','🖍️','💥']; for(let i=0;i<n;i++){ const d=document.createElement('div'); d.className='conf'; d.textContent=em[rnd(em.length)]; d.style.left=Math.random()*100+'vw'; d.style.top='-30px'; d.style.animationDelay=Math.random()*.8+'s'; d.style.fontSize=(18+Math.random()*22)+'px'; document.body.appendChild(d); setTimeout(()=>d.remove(),3500);} }
+
+/* ---------- Yönetici menüsü ---------- */
+function closeAdminMenu(){ const m=$('.adm-menu'); if(m) m.remove(); }
+function openAdminMenu(pid,anchor){
+  closeAdminMenu();
+  const p=(room.players||[]).find(x=>x.id===pid); if(!p) return;
+  const m=document.createElement('div'); m.className='adm-menu'; m.setAttribute('role','menu');
+  m.innerHTML=`<div class="h">${esc(p.name)}</div>
+    <button role="menuitem" data-a="kick">🚪 Odadan at</button>
+    <button role="menuitem" data-a="ban" class="danger">⛔ Yasakla (geri giremez)</button>`;
+  document.body.appendChild(m);
+  const r=anchor.getBoundingClientRect();
+  m.style.left=Math.max(8,Math.min(innerWidth-m.offsetWidth-8,r.left))+'px';
+  m.style.top=Math.min(innerHeight-m.offsetHeight-8,r.bottom+6)+'px';
+  m.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const act=b.dataset.a; closeAdminMenu();
+    if(act==='kick') hostKick(pid,false);
+    if(act==='ban'){ if(confirm(p.name+' bu odadan yasaklansın mı?\nGeri katılamaz (kalıcı cihaz kimliğiyle engellenir).')) hostKick(pid,true); }
+  });
+  setTimeout(()=>{ document.addEventListener('click',closeAdminMenu,{once:true}); },0);
+}
+function showKickNotice(ban){
+  $('#neTitle').textContent=ban?'Yasaklandın':'Odadan atıldın';
+  $('#neMsg').textContent=ban?'Oda sahibi seni bu odadan yasakladı. Aynı cihazdan bu odaya tekrar giremezsin.':'Oda sahibi seni odadan çıkardı. İstersen kodla tekrar katılabilirsin.';
+  $('#neTech').textContent=''; $('#neRetry').style.display='none';
+  $('#netErrModal').classList.add('show'); sfx('err');
+}
+/* ---------- Bağlantı hata kutusu ---------- */
+function showNetError(title,msg){
+  $('#neRetry').style.display='';
+  $('#neTitle').textContent=title; $('#neMsg').textContent=msg;
+  $('#neTech').textContent='Tarayıcı: '+navigator.userAgent+'\nAdres: '+location.protocol+'//'+(location.host||'(dosya)')+'\nPeerJS yüklü: '+(typeof Peer!=='undefined')+'\nÇevrimiçi: '+navigator.onLine;
+  $('#netErrModal').classList.add('show'); sfx('err');
+}
+$('#neClose').onclick=()=>$('#netErrModal').classList.remove('show');
+$('#neRetry').onclick=()=>{ $('#netErrModal').classList.remove('show'); setTimeout(()=>{ (S.lastAction==='join'?joinRoom:createRoom)(); },100); };
+$('#netErrModal').addEventListener('click',e=>{ if(e.target.id==='netErrModal') e.target.classList.remove('show'); });
+
+/* ---------- Tema ---------- */
+function applyTheme(t){ document.documentElement.dataset.theme=t; $('#btnTheme').textContent=t==='dark'?'☀️':'🌙'; try{localStorage.setItem('cizbozz-theme',t)}catch(e){} }
+applyTheme((()=>{try{return localStorage.getItem('cizbozz-theme')||'light'}catch(e){return 'light'}})());
+$('#btnTheme').onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+$('#btnHelp').onclick=()=>$('#helpModal').classList.add('show');
+$('#helpModal').addEventListener('click',e=>{ if(e.target.id==='helpModal') e.target.classList.remove('show'); });
+
+
+/* =========================================================
+   SES MOTORU — Web Audio ile üretilen efektler + müzik
+   Hiçbir ses dosyası indirilmez; MP3 sadece yerelde çalar.
+   ========================================================= */
+const AUD={ ctx:null, master:null, sfxG:null, musG:null,
+  sfxOn:true, musOn:true, sfxVol:.7, musVol:.35,
+  musTimer:null, musStep:0, musPlaying:false, userEl:null, userURL:null, userName:'' };
+try{ const a=JSON.parse(localStorage.getItem('cizbozz-audio')||'null'); if(a){ AUD.sfxOn=a.sfxOn!==false; AUD.musOn=a.musOn!==false; if(typeof a.sfxVol==='number')AUD.sfxVol=a.sfxVol; if(typeof a.musVol==='number')AUD.musVol=a.musVol; } }catch(e){}
+function saveAudio(){ try{localStorage.setItem('cizbozz-audio',JSON.stringify({sfxOn:AUD.sfxOn,musOn:AUD.musOn,sfxVol:AUD.sfxVol,musVol:AUD.musVol}))}catch(e){} }
+
+function audInit(){
+  if(AUD.ctx){ if(AUD.ctx.state==='suspended') AUD.ctx.resume(); return; }
+  const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+  AUD.ctx=new C();
+  AUD.master=AUD.ctx.createGain(); AUD.master.gain.value=.9; AUD.master.connect(AUD.ctx.destination);
+  AUD.sfxG=AUD.ctx.createGain(); AUD.sfxG.connect(AUD.master);
+  AUD.musG=AUD.ctx.createGain(); AUD.musG.connect(AUD.master);
+  applyVolumes();
+}
+function applyVolumes(){
+  if(AUD.sfxG) AUD.sfxG.gain.value=AUD.sfxOn?AUD.sfxVol:0;
+  if(AUD.musG) AUD.musG.gain.value=AUD.musOn?AUD.musVol*1.55:0;
+  if(AUD.userEl) AUD.userEl.volume=AUD.musOn?clamp(AUD.musVol*1.4,0,1):0;
+}
+/* tek ton */
+function tone(freq,dur,{type='sine',vol=.3,when=0,slideTo=null,attack=.005,dest=null}={}){
+  if(!AUD.ctx) return;
+  const t0=AUD.ctx.currentTime+when;
+  const o=AUD.ctx.createOscillator(), g=AUD.ctx.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t0);
+  if(slideTo) o.frequency.exponentialRampToValueAtTime(slideTo,t0+dur);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(vol,t0+attack);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(dest||AUD.sfxG);
+  o.start(t0); o.stop(t0+dur+.05);
+}
+function noise(dur,{vol=.15,when=0,hp=800,dest=null}={}){
+  if(!AUD.ctx) return;
+  const t0=AUD.ctx.currentTime+when, n=Math.floor(AUD.ctx.sampleRate*dur);
+  const buf=AUD.ctx.createBuffer(1,n,AUD.ctx.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+  const src=AUD.ctx.createBufferSource(); src.buffer=buf;
+  const f=AUD.ctx.createBiquadFilter(); f.type='highpass'; f.frequency.value=hp;
+  const g=AUD.ctx.createGain(); g.gain.value=vol;
+  src.connect(f); f.connect(g); g.connect(dest||AUD.sfxG); src.start(t0);
+}
+const SFX={
+  click:()=>tone(520,.07,{type:'square',vol:.12}),
+  pop:()=>{ tone(380,.09,{type:'sine',vol:.28,slideTo:760}); },
+  join:()=>{ tone(523,.12,{type:'triangle',vol:.28}); tone(784,.16,{type:'triangle',vol:.28,when:.09}); },
+  leave:()=>{ tone(500,.12,{type:'triangle',vol:.22,slideTo:300}); },
+  start:()=>{ [392,494,587,784].forEach((f,i)=>tone(f,.18,{type:'square',vol:.2,when:i*.09})); noise(.25,{vol:.08,when:.3,hp:3000}); },
+  send:()=>{ tone(660,.09,{type:'triangle',vol:.28}); tone(990,.14,{type:'triangle',vol:.26,when:.07}); },
+  tick:()=>tone(880,.05,{type:'square',vol:.1}),
+  warn:()=>{ tone(440,.12,{type:'sawtooth',vol:.16}); tone(440,.12,{type:'sawtooth',vol:.16,when:.16}); },
+  next:()=>{ tone(600,.1,{type:'triangle',vol:.25}); tone(800,.12,{type:'triangle',vol:.25,when:.08}); },
+  reveal:()=>{ noise(.18,{vol:.1,hp:1500}); tone(300,.35,{type:'sawtooth',vol:.14,slideTo:900}); },
+  fanfare:()=>{ [523,659,784,1047].forEach((f,i)=>tone(f,.28,{type:'triangle',vol:.28,when:i*.11})); tone(1047,.7,{type:'sine',vol:.22,when:.5}); },
+  brush:()=>noise(.05,{vol:.05,hp:2500}),
+  err:()=>{ tone(200,.18,{type:'sawtooth',vol:.2,slideTo:120}); },
+  undo:()=>tone(420,.08,{type:'triangle',vol:.2,slideTo:280}),
+  fill:()=>{ noise(.14,{vol:.09,hp:700}); tone(300,.16,{type:'sine',vol:.18,slideTo:520}); }
+};
+function sfx(n){ if(!AUD.sfxOn) return; audInit(); if(!AUD.ctx) return; try{ SFX[n]&&SFX[n](); }catch(e){} }
+
+/* --- Prosedürel müzik: 3 farklı bölüm, arpej + melodi + bas + davul, yumuşak reverb --- */
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+const MUS={
+  bpm:104, swing:.12,
+  // Her bölüm 4 akor (her akor 1 ölçü = 8 sekizlik). Değerler MIDI nota.
+  sections:[
+    { // A: neşeli (C – G – Am – F)
+      chords:[[60,64,67],[59,62,67],[57,60,64],[53,57,60]], bass:[36,43,45,41],
+      melody:[[76,-1,79,-1,76,74,72,-1],[74,-1,79,-1,74,71,67,-1],[72,-1,76,-1,81,79,76,-1],[77,-1,76,72,69,-1,72,-1]]
+    },
+    { // B: parlak (F – G – Em – Am)
+      chords:[[53,57,60],[55,59,62],[52,55,59],[57,60,64]], bass:[41,43,40,45],
+      melody:[[81,-1,77,-1,81,84,81,-1],[79,-1,74,-1,79,83,79,-1],[76,-1,79,-1,83,79,76,-1],[81,79,76,-1,72,-1,76,-1]]
+    },
+    { // C: sakin köprü (Dm – Bb – C – G)
+      chords:[[50,53,57],[58,62,65],[48,52,55],[55,59,62]], bass:[38,46,36,43],
+      melody:[[74,-1,-1,77,-1,-1,81,-1],[77,-1,-1,74,-1,-1,70,-1],[72,-1,-1,76,-1,-1,79,-1],[74,-1,71,-1,67,-1,-1,-1]]
+    }
+  ],
+  order:[0,0,1,0,2,1,0,1]      // bölümlerin çalınma sırası (her biri 4 ölçü)
+};
+let _rev=null;
+function getReverb(){
+  if(_rev||!AUD.ctx) return _rev;
+  const ctx=AUD.ctx, len=Math.floor(ctx.sampleRate*1.8), buf=ctx.createBuffer(2,len,ctx.sampleRate);
+  for(let c=0;c<2;c++){ const d=buf.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.6); }
+  const conv=ctx.createConvolver(); conv.buffer=buf;
+  const wet=ctx.createGain(); wet.gain.value=.5; conv.connect(wet); wet.connect(AUD.musG);
+  _rev={input:conv}; return _rev;
+}
+function musBus(){                       // müzik için filtre + reverb hattı
+  if(AUD._bus||!AUD.ctx) return AUD._bus;
+  const ctx=AUD.ctx;
+  const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=5200; lp.Q.value=.5;
+  const dry=ctx.createGain(); dry.gain.value=.9;
+  lp.connect(dry); dry.connect(AUD.musG);
+  const rv=getReverb(); const send=ctx.createGain(); send.gain.value=.35; lp.connect(send); send.connect(rv.input);
+  AUD._bus={input:lp}; return AUD._bus;
+}
+function note(freq,dur,{type='sine',vol=.1,when=0,attack=.01,rel=.08,detune=0,bus=null}={}){
+  if(!AUD.ctx) return;
+  const ctx=AUD.ctx, t0=ctx.currentTime+when;
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.value=freq; if(detune) o.detune.value=detune;
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(.0002,vol),t0+attack);
+  g.gain.setValueAtTime(Math.max(.0002,vol),t0+Math.max(attack,dur-rel));
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(bus||musBus().input);
+  o.start(t0); o.stop(t0+dur+.05);
+}
+function kick(when){ if(!AUD.ctx) return; const ctx=AUD.ctx,t0=ctx.currentTime+when,o=ctx.createOscillator(),g=ctx.createGain();
+  o.frequency.setValueAtTime(140,t0); o.frequency.exponentialRampToValueAtTime(42,t0+.16);
+  g.gain.setValueAtTime(.5,t0); g.gain.exponentialRampToValueAtTime(.001,t0+.22); o.connect(g); g.connect(AUD.musG); o.start(t0); o.stop(t0+.25); }
+function hat(when,vol=.05,open=false){ if(!AUD.ctx) return; noise(open?.16:.04,{vol,when,hp:7000,dest:AUD.musG}); }
+function snare(when){ if(!AUD.ctx) return; noise(.13,{vol:.11,when,hp:1800,dest:AUD.musG}); note(190,.09,{type:'triangle',vol:.08,when,bus:AUD.musG}); }
+
+function musStep(){
+  if(!AUD.ctx||!AUD.musPlaying||AUD.userEl) return;
+  const step=AUD.musStep;                           // sekizlik nota sayacı
+  const barIdx=Math.floor(step/8);
+  const secIdx=MUS.order[Math.floor(barIdx/4)%MUS.order.length];
+  const sec=MUS.sections[secIdx], bar=barIdx%4, pos=step%8;
+  const beat=60/MUS.bpm/2;                          // sekizlik süre
+  const sw=(pos%2===1)?beat*MUS.swing:0;            // hafif swing
+  const t=sw;
+  // Pad: her ölçü başı yumuşak akor
+  if(pos===0){
+    sec.chords[bar].forEach((m,i)=>{
+      note(mtof(m),beat*8,{type:'sine',vol:.05,attack:.35,rel:.6,detune:i*3-3});
+      note(mtof(m)*1.003,beat*8,{type:'triangle',vol:.02,attack:.4,rel:.6});
+    });
+  }
+  // Bas: kök + beşli
+  if(pos===0) note(mtof(sec.bass[bar]),beat*3.4,{type:'triangle',vol:.16,attack:.01,rel:.25});
+  if(pos===3) note(mtof(sec.bass[bar]),beat*1.6,{type:'triangle',vol:.1,rel:.15});
+  if(pos===4) note(mtof(sec.bass[bar]+7),beat*3,{type:'triangle',vol:.12,rel:.25});
+  // Arpej: akor sesleri yukarı-aşağı
+  const arp=[0,1,2,1,0,1,2,1][pos];
+  note(mtof(sec.chords[bar][arp]+12),beat*1.4,{type:'triangle',vol:.05,when:t,attack:.005,rel:.12});
+  // Melodi
+  const mn=sec.melody[bar][pos];
+  if(mn>0){
+    note(mtof(mn),beat*1.9,{type:'square',vol:.028,when:t,attack:.012,rel:.16});
+    note(mtof(mn),beat*1.9,{type:'sine',vol:.05,when:t,attack:.012,rel:.16,detune:6});
+  }
+  // Davul
+  if(pos===0||pos===4||(pos===6&&bar%2===1)) kick(t);
+  if(pos===2||pos===6) snare(t);
+  if(pos%2===0) hat(t,.03); else hat(t,.05,pos===7&&bar===3);
+  AUD.musStep++;
+}
+function musStart(){
+  if(AUD.musPlaying) return;
+  audInit(); if(!AUD.ctx&&!AUD.userEl) return;
+  AUD.musPlaying=true;
+  if(AUD.userEl){ AUD.userEl.play().catch(()=>{}); return; }
+  clearInterval(AUD.musTimer);
+  AUD.musStep=0; AUD.musTimer=setInterval(musStep,(60/MUS.bpm/2)*1000);
+}
+function musStop(){
+  AUD.musPlaying=false; clearInterval(AUD.musTimer); AUD.musTimer=null;
+  if(AUD.userEl) AUD.userEl.pause();
+}
+/* Kullanıcının kendi MP3'ü — sadece bu cihazda çalar, ağa gitmez */
+function setUserMusic(file){
+  clearUserMusic(true);
+  AUD.userURL=URL.createObjectURL(file);
+  AUD.userName=file.name;
+  const el=new Audio(AUD.userURL); el.loop=true; el.preload='auto';
+  AUD.userEl=el;
+  applyVolumes();
+  // yerleşik müziği sustur, kullanıcınınkini çal
+  clearInterval(AUD.musTimer); AUD.musTimer=null;
+  AUD.musPlaying=true;
+  el.play().then(()=>{},()=>{ toast('Müziği başlatmak için ekrana bir kez dokun'); });
+  $('#mp3Now').textContent='🎵 '+file.name;
+  $('#mp3Clear').disabled=false;
+}
+function clearUserMusic(silent){
+  if(AUD.userEl){ AUD.userEl.pause(); AUD.userEl.src=''; AUD.userEl=null; }
+  if(AUD.userURL){ URL.revokeObjectURL(AUD.userURL); AUD.userURL=null; }
+  AUD.userName='';
+  $('#mp3Now').textContent='Dosya seçilmedi. Şu an oyunun müziği çalıyor.';
+  $('#mp3Clear').disabled=true;
+  if(!silent && AUD.musOn){ AUD.musPlaying=false; musStart(); }
+}
+/* panel bağlantıları */
+$('#btnSound').onclick=()=>{ audInit(); $('#sndPanel').classList.toggle('show'); sfx('click'); };
+document.addEventListener('click',e=>{ const p=$('#sndPanel'); if(p.classList.contains('show') && !p.contains(e.target) && !$('#btnSound').contains(e.target)) p.classList.remove('show'); });
+function syncAudioUI(){
+  $('#volSfx').value=Math.round(AUD.sfxVol*100); $('#volMus').value=Math.round(AUD.musVol*100);
+  const a=$('#tgSfx'),b=$('#tgMus');
+  a.textContent=AUD.sfxOn?'Açık':'Kapalı'; a.classList.toggle('on',AUD.sfxOn);
+  b.textContent=AUD.musOn?'Açık':'Kapalı'; b.classList.toggle('on',AUD.musOn);
+  $('#btnSound').textContent=(AUD.sfxOn||AUD.musOn)?'🔊':'🔇';
+}
+$('#volSfx').oninput=e=>{ AUD.sfxVol=e.target.value/100; applyVolumes(); saveAudio(); };
+$('#volSfx').onchange=()=>sfx('pop');
+$('#volMus').oninput=e=>{ AUD.musVol=e.target.value/100; applyVolumes(); saveAudio(); };
+$('#tgSfx').onclick=()=>{ AUD.sfxOn=!AUD.sfxOn; applyVolumes(); saveAudio(); syncAudioUI(); sfx('pop'); };
+$('#tgMus').onclick=()=>{
+  AUD.musOn=!AUD.musOn; applyVolumes(); saveAudio(); syncAudioUI();
+  if(AUD.musOn){ AUD.musPlaying=false; musStart(); } else musStop();
+};
+$('#mp3Pick').onclick=()=>$('#mp3File').click();
+$('#mp3File').onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  if(!(f.type.startsWith('audio/')||/\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(f.name))){ toast('Lütfen bir ses dosyası seç'); e.target.value=''; return; }
+  setUserMusic(f); e.target.value=''; sfx('pop');
+};
+$('#mp3Clear').onclick=()=>{ clearUserMusic(); sfx('undo'); };
+syncAudioUI();
+/* Tarayıcılar sesi ilk dokunuşa kadar engeller: ilk etkileşimde müziği başlat */
+function firstGesture(){
+  audInit();
+  if(AUD.musOn) musStart();
+  ['pointerdown','keydown','touchstart'].forEach(ev=>window.removeEventListener(ev,firstGesture));
+}
+['pointerdown','keydown','touchstart'].forEach(ev=>window.addEventListener(ev,firstGesture,{passive:true}));
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ if(AUD.ctx) AUD.ctx.suspend(); if(AUD.userEl) AUD.userEl.pause(); }
+  else{ if(AUD.ctx) AUD.ctx.resume(); if(AUD.userEl&&AUD.musPlaying&&AUD.musOn) AUD.userEl.play().catch(()=>{}); }
+});
+/* Genel buton tıklama sesi */
+document.addEventListener('click',e=>{ const b=e.target.closest('.btn,.mode,.face-opt,.sw,.album-tab'); if(b && !b.disabled) sfx('click'); },true);
+
+
+/* ---------- HOME UI ---------- */
+function renderAvatarHome(){
+  $('#avBig').innerHTML=avatarSVG(me.avatar);
+  $$('#facePicker .face-opt').forEach((el,i)=>el.classList.toggle('sel',i===me.avatar.face));
+  $$('#swatches .sw').forEach((el,i)=>el.classList.toggle('sel',i===me.avatar.color));
+}
+FACES.forEach((_,i)=>{ const b=document.createElement('button'); b.className='face-opt'; b.setAttribute('aria-label','Yüz '+(i+1)); b.innerHTML=avatarSVG({face:i,color:me.avatar.color}); b.onclick=()=>{me.avatar.face=i;renderAvatarHome();refreshFaceThumbs()}; $('#facePicker').appendChild(b); });
+AV_COLORS.forEach((c,i)=>{ const b=document.createElement('button'); b.className='sw'; b.style.background=c; b.setAttribute('aria-label','Renk '+(i+1)); b.onclick=()=>{me.avatar.color=i;renderAvatarHome();refreshFaceThumbs()}; $('#swatches').appendChild(b); });
+function refreshFaceThumbs(){ $$('#facePicker .face-opt').forEach((el,i)=>el.innerHTML=avatarSVG({face:i,color:me.avatar.color})); }
+$('#avPrev').onclick=()=>{me.avatar.face=(me.avatar.face+FACES.length-1)%FACES.length;renderAvatarHome()};
+$('#avNext').onclick=()=>{me.avatar.face=(me.avatar.face+1)%FACES.length;renderAvatarHome()};
+$('#avRand').onclick=()=>{me.avatar={face:rnd(FACES.length),color:rnd(AV_COLORS.length)};renderAvatarHome();refreshFaceThumbs()};
+$('#inName').value=me.name;
+renderAvatarHome();
+
+if(location.protocol==='file:') $('#fileWarn').style.display='block';
+/* Davet linkinden kodu oku: ?oda=KOD, #oda=KOD ya da ?room=KOD. Uygulama içi tarayıcılar sorguyu düşürürse hash yedek olur */
+function codeFromUrl(){
+  try{
+    const sp=new URLSearchParams(location.search), hp=new URLSearchParams((location.hash||'').replace(/^#\??/,''));
+    let q=sp.get('oda')||sp.get('room')||sp.get('kod')||hp.get('oda')||hp.get('room')||hp.get('kod');
+    if(!q){ const m=(location.href.match(/[?&#](?:oda|room|kod)=([A-Za-z0-9]{4,6})/i)||[]); q=m[1]||null; }
+    return q?q.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5):'';
+  }catch(e){ return ''; }
+}
+const URL_CODE=codeFromUrl();
+if(URL_CODE){
+  $('#inCode').value=URL_CODE;
+  $('#inviteBanner').style.display='block';
+  $('#inviteBanner b').textContent=URL_CODE;
+  setTimeout(()=>{ try{ $('#inName').focus(); }catch(e){} },300);
+}
+$('#inCode').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'')});
+
+function getIdentity(){
+  const name=($('#inName').value||'').trim() || ('Çizer'+(100+rnd(900)));
+  me.name=name.slice(0,14);
+  try{localStorage.setItem('cizbozz-me',JSON.stringify({name:me.name,avatar:me.avatar}))}catch(e){}
+  return {name:me.name,avatar:me.avatar};
+}
+const genCode=()=>{const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';let s='';for(let i=0;i<5;i++)s+=c[rnd(c.length)];return s;};
+
+/* =========================================================
+   AĞ KATMANI
+   ========================================================= */
+/* --- PeerJS --- */
+/* Farklı ağlardaki (ör. mobil veri + ev wifi) cihazların bağlanabilmesi için STUN + TURN */
+const PEER_OPTS={
+  debug:0,
+  config:{
+    iceServers:[
+      {urls:'stun:stun.l.google.com:19302'},
+      {urls:'stun:stun1.l.google.com:19302'},
+      {urls:'stun:global.stun.twilio.com:3478'},
+      {urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443','turn:openrelay.metered.ca:443?transport=tcp'],username:'openrelayproject',credential:'openrelayproject'}
+    ],
+    iceCandidatePoolSize:4
+  }
+};
+function waitForPeerLib(ms){
+  return new Promise((res,rej)=>{
+    const t0=Date.now();
+    (function chk(){
+      if(typeof Peer!=='undefined') return res();
+      if(!window.__peerLoading && Date.now()-t0>300) return rej(new Error('PeerJS kütüphanesi yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.'));
+      if(Date.now()-t0>ms) return rej(new Error('PeerJS kütüphanesi yüklenemedi (zaman aşımı).'));
+      setTimeout(chk,150);
+    })();
+  });
+}
+function friendlyPeerError(e){
+  const t=e&&e.type;
+  const map={
+    'unavailable-id':'Bu oda kodu kullanımda',
+    'peer-unavailable':'Bu kodda bir oda bulunamadı',
+    'network':'Sunucuya ulaşılamıyor. İnternetini kontrol et',
+    'server-error':'Bağlantı sunucusu yanıt vermiyor',
+    'socket-error':'Bağlantı sunucusuna ulaşılamıyor',
+    'socket-closed':'Sunucu bağlantısı kapandı',
+    'browser-incompatible':'Tarayıcın WebRTC desteklemiyor',
+    'webrtc':'WebRTC hatası. Farklı bir tarayıcı dene',
+    'ssl-unavailable':'Güvenli (https) bağlantı gerekiyor'
+  };
+  return map[t]||((e&&e.message)||t||'bilinmeyen hata');
+}
+function peerHostOpen(code,onMsg,onConn,onDisc){
+  return new Promise(async(res,rej)=>{
+    try{ await waitForPeerLib(16000); }catch(e){ return rej(e); }
+    let done=false, peer;
+    try{ peer=new Peer('cizbozz-'+code.toLowerCase(),PEER_OPTS); }catch(e){ return rej(e); }
+    const conns=new Map();
+    const fail=(e)=>{ if(done) return; done=true; clearTimeout(to); try{peer.destroy()}catch(_){} rej(e); };
+    const to=setTimeout(()=>fail(Object.assign(new Error('Bağlantı sunucusuna ulaşılamadı (zaman aşımı). Biraz sonra tekrar dene.'),{type:'timeout'})),12000);
+    peer.on('open',()=>{ if(done) return; done=true; clearTimeout(to); res({
+      id:'host',
+      toPeer:(to2,msg)=>{const c=conns.get(to2); if(c&&c.open) c.send(msg)},
+      toAll:(msg)=>conns.forEach(c=>{ if(c.open) c.send(msg) }),
+      dropPeer:(id)=>{ const c=conns.get(id); if(c){ try{c.close()}catch(_){} conns.delete(id);} },
+      close:()=>{ try{peer.destroy()}catch(_){} }
+    }); });
+    peer.on('error',e=>{
+      if(!done) return fail(e);
+      // oda kurulduktan sonraki hatalar
+      if(e&&e.type==='network'||e&&e.type==='server-error'||e&&e.type==='socket-error'){ toast('Sunucu bağlantısı zayıf: '+friendlyPeerError(e)); }
+    });
+    // sunucu ile bağlantı koptuysa yeniden bağlanmayı dene (oda kodu korunur)
+    peer.on('disconnected',()=>{ if(done && !peer.destroyed){ try{ peer.reconnect(); }catch(_){} } });
+    peer.on('connection',c=>{
+      c.on('open',()=>{conns.set(c.peer,c); onConn(c.peer)});
+      c.on('data',d=>onMsg(c.peer,d));
+      c.on('close',()=>{conns.delete(c.peer); onDisc(c.peer)});
+      c.on('error',()=>{conns.delete(c.peer); onDisc(c.peer)});
+    });
+  });
+}
+function peerClientOpen(code,onMsg,onDisc){
+  return new Promise(async(res,rej)=>{
+    try{ await waitForPeerLib(16000); }catch(e){ return rej(e); }
+    let done=false, peer, conn=null;
+    try{ peer=new Peer(undefined,PEER_OPTS); }catch(e){ return rej(e); }
+    const fail=(e)=>{ if(done) return; done=true; clearTimeout(to); try{peer.destroy()}catch(_){} rej(e); };
+    const to=setTimeout(()=>fail(Object.assign(new Error('Odaya bağlanılamadı. Kod doğru mu? Oda kuran kişi sayfayı açık tutuyor mu?'),{type:'timeout'})),15000);
+    peer.on('open',pid=>{
+      conn=peer.connect('cizbozz-'+code.toLowerCase(),{reliable:true});
+      conn.on('open',()=>{ if(done) return; done=true; clearTimeout(to); res({id:pid,toHost:(m)=>{ if(conn.open) conn.send(m) },close:()=>{ try{peer.destroy()}catch(_){} }}); });
+      conn.on('data',d=>onMsg('host',d));
+      conn.on('close',()=>{ if(done) onDisc(); });
+      conn.on('error',e=>fail(e));
+    });
+    peer.on('error',e=>{ if(!done) fail(e); });
+  });
+}
+
+/* =========================================================
+   ODA / OYUN MANTIĞI (host yetkili)
+   ========================================================= */
+function newRoom(code){
+  return { code, hostId:null, phase:'lobby', mode:'normal',
+    settings:{draw:60,write:30,chains:1},
+    players:[],            // {id,name,avatar,connected,dev}
+    bans:[],               // [{dev,name}]  (yalnızca host'ta tutulur)
+    order:[], albums:[], round:0, totalRounds:0, roundKind:'', roundMode:'normal',
+    submitted:{}, progress:{}, revealAlbum:0, revealStep:0 };
+}
+
+/* ---- Oda kur ---- */
+async function createRoom(){
+  if(S.busy) return; S.busy=true; S.lastAction='create';
+  const btn=$('#btnCreate'); btn.disabled=true; const old=btn.textContent; btn.textContent='Oda kuruluyor…';
+  const ident=getIdentity();
+  let code=null, lastErr=null;
+  isHost=true;
+  for(let i=0;i<5 && !net;i++){
+    code=genCode();
+    try{
+      net=await peerHostOpen(code,hostOnMessage,()=>{},(pid)=>hostDisconnect(pid));
+    }catch(e){
+      lastErr=e; net=null;
+      // kod başkası tarafından alınmışsa yeni kod dene, başka hata ise dur
+      if(!(e&&e.type==='unavailable-id')) break;
+    }
+  }
+  btn.disabled=false; btn.textContent=old; S.busy=false;
+  if(!net){ isHost=false; showNetError('Oda kurulamadı',friendlyPeerError(lastErr)); return; }
+  myId='host'; me.id=myId;
+  HOST=newRoom(code); HOST.hostId=myId;
+  HOST.players.push({id:myId,name:ident.name,avatar:ident.avatar,connected:true,dev:DEV});
+  hostBroadcastRoom();
+  enterLobby();
+  sfx('join');
+}
+
+/* ---- Odaya katıl ---- */
+async function joinRoom(){
+  if(S.busy) return; S.lastAction='join';
+  const code=($('#inCode').value||'').trim().toUpperCase();
+  if(code.length<4){ toast('Oda kodunu gir'); return; }
+  S.busy=true;
+  const btn=$('#btnJoin'); btn.disabled=true; const old=btn.textContent; btn.textContent='Bağlanıyor…';
+  const ident=getIdentity();
+  isHost=false;
+  try{
+    net=await peerClientOpen(code,clientOnMessage,()=>{toast('Bağlantı koptu'); leaveRoom(true)});
+    myId=net.id;
+  }catch(e){
+    btn.disabled=false; btn.textContent=old; S.busy=false; net=null;
+    if(e&&e.type==='peer-unavailable') toast('Bu kodda bir oda bulunamadı. Kodu kontrol et.');
+    else showNetError('Odaya katılınamadı',friendlyPeerError(e));
+    return;
+  }
+  btn.disabled=false; btn.textContent=old; S.busy=false;
+  me.id=myId;
+  room={code,players:[],phase:'joining'};
+  net.toHost({t:'join',name:ident.name,avatar:ident.avatar,id:myId,dev:DEV});
+  sfx('join');
+}
+
+function leaveRoom(silent){
+  try{ if(net){ if(!isHost && net.toHost) net.toHost({t:'leave',id:myId}); net.close(); } }catch(e){}
+  try{ if(HOST) clearTimeout(HOST._hostTimer);}catch(e){}
+  net=null; room=null; HOST=null; isHost=false; clearTimer(); show('home');
+  if(!silent) toast('Odadan ayrıldın');
+}
+
+/* ---- Host: gelen mesajlar ---- */
+function hostOnMessage(from,msg){
+  if(!isHost||!HOST) return;
+  switch(msg.t){
+    case 'join':{
+      if((HOST.bans||[]).some(b=>b.dev===msg.dev)){ hostSend(from,{t:'reject',reason:'Bu odadan yasaklandın'}); return; }
+      if(HOST.phase!=='lobby'){ hostSend(from,{t:'reject',reason:'Oyun zaten başladı'}); return; }
+      if(HOST.players.length>=12){ hostSend(from,{t:'reject',reason:'Oda dolu (12 kişi)'}); return; }
+      const id=from;
+      if(!HOST.players.find(p=>p.id===id)){
+        let nm=msg.name; let k=2; while(HOST.players.some(p=>p.name===nm)){ nm=msg.name.slice(0,12)+k++; }
+        HOST.players.push({id,name:nm,avatar:msg.avatar,connected:true,dev:msg.dev||null});
+      }
+      hostBroadcastRoom();
+      break;}
+    case 'leave': hostDisconnect(msg.id||from); break;
+    case 'submit': hostReceiveSubmit(from,msg); break;
+    case 'nextRevealReq': break;
+  }
+}
+function hostSend(to,msg){ net.toPeer(to,msg); }
+/* ---- Yönetici eylemleri (yalnızca host) ---- */
+function hostKick(id,ban){
+  if(!isHost||!HOST||id===myId) return;
+  const p=HOST.players.find(x=>x.id===id); if(!p) return;
+  if(ban && p.dev) HOST.bans.push({dev:p.dev,name:p.name});
+  try{ hostSend(id,{t:'kicked',ban:!!ban}); }catch(e){}
+  // mesajın ulaşması için kısa bir süre sonra bağlantıyı kapat
+  setTimeout(()=>{ try{ net.dropPeer&&net.dropPeer(id); }catch(e){} },400);
+  if(HOST.phase==='lobby') HOST.players=HOST.players.filter(x=>x.id!==id); else p.connected=false;
+  hostBroadcastRoom();
+  if(HOST.phase==='play') hostCheckRoundDone();
+  toast((ban?'Yasaklandı: ':'Odadan atıldı: ')+p.name);
+}
+function hostUnbanAll(){ if(!isHost) return; const n=HOST.bans.length; HOST.bans=[]; hostBroadcastRoom(); toast(n?n+' yasak kaldırıldı':'Yasaklı kimse yok'); }
+function hostBroadcastRoom(){
+  const pub=publicRoom();
+  net.toAll({t:'room',room:pub});
+  applyRoom(pub);
+}
+function publicRoom(){
+  // albümlerin tamamı sadece reveal fazında gider; oyun sırasında hafif tut
+  const r={...HOST};
+  delete r._hostTimer;
+  r.players=(HOST.players||[]).map(p=>({id:p.id,name:p.name,avatar:p.avatar,connected:p.connected}));
+  r.banCount=(HOST.bans||[]).length;
+  delete r.bans;
+  r.albums = (HOST.phase==='reveal'||HOST.phase==='end') ? HOST.albums : undefined;
+  r.albumMeta = (HOST.albums||[]).map(a=>({owner:a.owner,len:a.links.length}));
+  return JSON.parse(JSON.stringify(r));
+}
+function hostDisconnect(id){
+  if(!HOST) return;
+  const p=HOST.players.find(x=>x.id===id);
+  if(!p) return;
+  if(HOST.phase==='lobby'){ HOST.players=HOST.players.filter(x=>x.id!==id); }
+  else{ p.connected=false; }
+  hostBroadcastRoom();
+  if(HOST.phase==='play') hostCheckRoundDone();
+}
+
+/* ---- Client: gelen mesajlar ---- */
+function clientOnMessage(from,msg){
+  switch(msg.t){
+    case 'room': applyRoom(msg.room); break;
+    case 'reject': toast(msg.reason||'Reddedildi'); leaveRoom(true); break;
+    case 'kicked': leaveRoom(true); showKickNotice(msg.ban); break;
+    case 'assign': onAssign(msg); break;
+    case 'roundEnd': break;
+    case 'tick': break;
+  }
+}
+
+/* ---- Oda durumu uygula (herkeste) ---- */
+function applyRoom(r){
+  const prevPhase=room?room.phase:null;
+  const wasJoining = room && room.phase==='joining';
+  const prevCount=(room&&room.players)?room.players.length:0;
+  const prevSubs=(room&&room.submitted)?Object.keys(room.submitted).length:0;
+  const prevAlbum=(room&&typeof room.revealAlbum==='number')?room.revealAlbum:-1;
+  room=r;
+  if(r.phase==='lobby' && prevPhase==='lobby' && r.players.length>prevCount) sfx('join');
+  if(r.phase==='lobby' && prevPhase==='lobby' && r.players.length<prevCount) sfx('leave');
+  if(r.phase==='play' && prevPhase==='play' && r.submitted && Object.keys(r.submitted).length>prevSubs) sfx('pop');
+  if((r.phase==='reveal'||r.phase==='end') && prevPhase===r.phase && r.revealAlbum!==prevAlbum) sfx('next');
+  if(isHost && net){ /* host kendi yetkili durumunu kullanır */ }
+  if(r.phase==='lobby'){ if(!$('#screen-lobby').classList.contains('active')) enterLobby(); renderLobby(); }
+  else if(r.phase==='play'){ /* oyun ekranı assign ile yönetilir */ if(!$('#screen-game').classList.contains('active')){ show('game'); } renderWaitDots(); }
+  else if(r.phase==='reveal'||r.phase==='end'){ if(prevPhase!=='reveal'&&prevPhase!=='end'){ clearTimer(); show('reveal'); confetti(30); sfx('fanfare'); } renderReveal(); }
+}
+function hostRoomRef(){ return room; }
+</script>
+<script>
+/* =========================================================
+   LOBİ
+   ========================================================= */
+function enterLobby(){ show('lobby'); renderLobby(); }
+function renderLobby(){
+  if(!room) return;
+  $('#lobbyCode').textContent=room.code;
+  const ps=room.players||[];
+  $('#plCount').textContent='('+ps.length+'/12)';
+  $('#players').innerHTML=ps.map(p=>`
+    <div class="pl ${p.id===room.hostId?'host':''} ${p.id===myId?'me':''} ${p.connected===false?'off':''}" data-pid="${esc(p.id)}">
+      <div class="av">${avatarSVG(p.avatar)}</div><div class="nm">${esc(p.name)}</div>
+      ${(isHost&&p.id!==myId)?`<button class="adm-btn" data-pid="${esc(p.id)}" aria-label="${esc(p.name)} için yönetici işlemleri" title="Yönet">⋯</button>`:''}
+    </div>`).join('');
+  $$('#players .adm-btn').forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); openAdminMenu(b.dataset.pid,b); });
+  const host = isHost;
+  $('#modes').innerHTML=MODES.map(m=>`
+    <button class="mode ${room.mode===m.id?'sel':''}" data-m="${m.id}" ${host?'':'disabled'}>
+      <span class="e">${m.e}</span><span class="t">${m.t}</span><span class="d">${m.d}</span>
+    </button>`).join('');
+  if(host) $$('#modes .mode').forEach(b=>b.onclick=()=>{ HOST.mode=b.dataset.m; hostBroadcastRoom(); sfx('pop'); });
+  $('#setDraw').value=room.settings.draw; $('#setWrite').value=room.settings.write;
+  const K=room.settings.chains||1;
+  $$('#chainPick .btn').forEach(b=>{ b.classList.toggle('on',+b.dataset.c===K); b.setAttribute('aria-checked',+b.dataset.c===K); b.disabled=!host; });
+  $('#chainHint').textContent = K===1
+    ? 'Her oyuncu her turda 1 zincir üzerinde çalışır.'
+    : 'Her turda herkes '+K+' farklı zincirde çalışır'+(ps.length>=2?'. Toplam '+(K*ps.length)+' albüm çıkar.':'. Albüm sayısı oyuncu sayısına göre artar.');
+  $('#setDraw').disabled=!host; $('#setWrite').disabled=!host;
+  $('#btnStart').style.display=host?'':'none';
+  $('#btnStart').disabled=ps.length<2 && !(location.hash==='#solo');
+  $('#hintHost').textContent = host
+    ? (ps.length<2?'En az 2 oyuncu gerekli. Kodu arkadaşlarınla paylaş.':'Hazırsan oyunu başlat!')
+    : 'Oda sahibi oyunu başlatınca oyun başlar…';
+}
+$$('#chainPick .btn').forEach(b=>b.onclick=()=>{ if(isHost){ HOST.settings.chains=+b.dataset.c; hostBroadcastRoom(); sfx('pop'); } });
+$('#setDraw').onchange=e=>{ if(isHost){ HOST.settings.draw=+e.target.value; hostBroadcastRoom(); } };
+$('#setWrite').onchange=e=>{ if(isHost){ HOST.settings.write=+e.target.value; hostBroadcastRoom(); } };
+function inviteLink(){
+  // Sayfanın kendi adresi + ?oda=KOD; bazı uygulamalar sorguyu düşürdüğü için #oda=KOD da eklenir
+  let base=location.href.split('#')[0].split('?')[0];
+  return base+'?oda='+room.code+'#oda='+room.code;
+}
+function inviteText(){ return 'ÇizBozz oynayalım! Oda kodu: '+room.code+'\n'+inviteLink(); }
+async function copyText(text){
+  try{ if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); return true; } }catch(e){}
+  // yedek: gizli textarea + execCommand
+  try{
+    const ta=document.createElement('textarea'); ta.value=text; ta.setAttribute('readonly','');
+    ta.style.cssText='position:fixed;top:0;left:0;opacity:0;font-size:16px';
+    document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0,text.length);
+    const ok=document.execCommand('copy'); ta.remove(); return ok;
+  }catch(e){ return false; }
+}
+$('#btnCopy').onclick=async()=>{
+  const ok=await copyText(room.code);
+  if(ok){ sfx('pop'); toast('Kod kopyalandı: '+room.code); }
+  else { window.prompt('Kodu kopyala (Ctrl+C):',room.code); }
+};
+$('#btnCopyLink').onclick=async()=>{
+  const link=inviteLink();
+  if(navigator.share && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    try{ await navigator.share({title:'ÇizBozz',text:'ÇizBozz oynayalım! Oda kodu: '+room.code,url:link}); return; }catch(e){ if(e&&e.name==='AbortError') return; }
+  }
+  const ok=await copyText(inviteText());
+  if(ok){ sfx('pop'); toast('Davet mesajı kopyalandı: kod + link'); }
+  else { window.prompt('Kopyala (Ctrl+C):',inviteText()); }
+};
+$('#btnLeave').onclick=()=>leaveRoom();
+$('#btnCreate').onclick=createRoom;
+$('#btnJoin').onclick=joinRoom;
+$('#inCode').addEventListener('keydown',e=>{ if(e.key==='Enter') joinRoom(); });
+$('#btnStart').onclick=()=>{ if(isHost) hostStartGame(); };
+
+/* =========================================================
+   OYUN AKIŞI (host)
+   Albüm sistemi: N oyuncu → N albüm. Her turda oyuncu i,
+   albüm (i+round) % N üzerinde çalışır.
+   ========================================================= */
+function activePlayers(){ return HOST.players.filter(p=>p.connected!==false); }
+
+function hostStartGame(){
+  const ps=HOST.players.filter(p=>p.connected!==false);
+  if(ps.length<2 && location.hash!=='#solo'){ toast('En az 2 oyuncu gerekli'); return; }
+  HOST.order=ps.map(p=>p.id).sort(()=>Math.random()-.5);
+  const n=HOST.order.length;
+  const K=clamp(+HOST.settings.chains||1,1,4);
+  HOST.chains=K;
+  // K*N albüm: albüm (k*N + i) -> oyuncu i, k. zincirini başlatır
+  HOST.albums=[];
+  for(let k=0;k<K;k++) HOST.order.forEach(id=>HOST.albums.push({owner:id,links:[],chain:k}));
+  const m=HOST.mode;
+  let rounds=n;
+  if(m==='kisa') rounds=Math.min(3,n);
+  HOST.totalRounds=Math.max(2,rounds);
+  HOST.round=0;
+  HOST.phase='play';
+  hostBeginRound();
+  sfx('start');
+}
+
+function roundKindFor(round){
+  const m=HOST.mode;
+  // 'write' | 'draw' | 'guess'
+  if(m==='sessiz') return 'draw';                    // sadece çizim → sessiz zincir
+  if(m==='bilgi')  return round===0?'draw':(round%2===1?'guess':'draw'); // çizim, tahmin, çizim…
+  return round===0?'write':(round%2===1?'draw':'guess');
+}
+function pickRoundMode(){
+  if(HOST.mode!=='karma') return HOST.mode;
+  const pool=['normal','hizli','kor','tek','tersyz'];
+  return pool[rnd(pool.length)];
+}
+
+/* Bir turda oyuncu i, k. görevinde şu albümle çalışır (dönüşüm garantili: her albümde herkes 1 kez) */
+function albumFor(playerIdx,slot){
+  const n=HOST.order.length;
+  return slot*n + ((playerIdx+HOST.round)%n);
+}
+function slotAssign(pid,slot){
+  const i=HOST.order.indexOf(pid);
+  const albumIdx=albumFor(i,slot);
+  const album=HOST.albums[albumIdx];
+  const prev=album.links.length?album.links[album.links.length-1]:null;
+  const kind=HOST.roundKind;
+  return {t:'assign',round:HOST.round,total:HOST.totalRounds,kind,rmode:HOST.roundMode,
+    duration:HOST.duration,endsAt:HOST.endsAt,slot,slots:HOST.chains,albumIdx,
+    prev: prev?{type:prev.type,data:prev.data}:null,
+    seed:(kind==='write' && HOST.mode!=='bilgi')?PROMPTS[rnd(PROMPTS.length)]:null};
+}
+function hostBeginRound(){
+  HOST.roundKind=roundKindFor(HOST.round);
+  HOST.roundMode=pickRoundMode();
+  HOST.submitted={};   // oyuncu -> tüm görevlerini bitirdi mi
+  HOST.progress={};    // oyuncu -> kaç görev bitirdi
+  const kind=HOST.roundKind;
+  let dur=(kind==='draw')?HOST.settings.draw:HOST.settings.write;
+  if(HOST.roundMode==='hizli' && dur>0) dur=Math.max(10,Math.round(dur/2));
+  // Süre, her görev için ayrı ayrı değil tüm tur için geçerli olsun: görev sayısıyla çarp (en fazla 4 katı)
+  HOST.perSlot=dur;
+  HOST.duration=dur>0?dur*HOST.chains:0;
+  HOST.roundStart=Date.now();
+  HOST.endsAt=HOST.duration>0?Date.now()+HOST.duration*1000:0;
+  HOST.phase='play';
+  hostBroadcastRoom();
+  HOST.order.forEach(pid=>{
+    const msg=slotAssign(pid,0);
+    if(pid===myId) onAssign(msg); else hostSend(pid,msg);
+  });
+  clearTimeout(HOST._hostTimer);
+  if(HOST.duration>0) HOST._hostTimer=setTimeout(()=>hostForceEnd(),HOST.duration*1000+1800);
+}
+
+function hostReceiveSubmit(from,msg){
+  if(!HOST||HOST.phase!=='play'||msg.round!==HOST.round) return;
+  if(HOST.submitted[from]) return;
+  const idx=HOST.order.indexOf(from); if(idx<0) return;
+  const done=HOST.progress[from]||0;
+  const slot=done;                                   // sıradaki görev
+  if(slot>=HOST.chains) return;
+  if(typeof msg.slot==='number' && msg.slot!==slot) return;   // yinelenen/eski gönderimi yok say
+  const album=HOST.albums[albumFor(idx,slot)];
+  album.links.push({by:from,type:msg.kind==='draw'?'draw':'text',data:msg.data,skipped:!!msg.skipped,round:HOST.round});
+  HOST.progress[from]=done+1;
+  if(HOST.progress[from]>=HOST.chains){
+    HOST.submitted[from]=true;
+    hostBroadcastRoom();
+    hostCheckRoundDone();
+  }else{
+    // aynı turda oyuncuya sıradaki zinciri ver
+    const next=slotAssign(from,HOST.progress[from]);
+    if(from===myId) onAssign(next); else hostSend(from,next);
+    hostBroadcastRoom();
+  }
+}
+function hostCheckRoundDone(){
+  if(!HOST||HOST.phase!=='play') return;
+  const need=HOST.order.filter(id=>{ const p=HOST.players.find(x=>x.id===id); return p&&p.connected!==false; });
+  if(need.every(id=>HOST.submitted[id])) hostEndRound();
+}
+function hostForceEnd(){
+  if(!HOST||HOST.phase!=='play') return;
+  const kind=HOST.roundKind;
+  HOST.order.forEach((pid,i)=>{
+    for(let slot=HOST.progress[pid]||0; slot<HOST.chains; slot++){
+      HOST.albums[albumFor(i,slot)].links.push({by:pid,type:kind==='draw'?'draw':'text',data:kind==='draw'?null:'(boş bıraktı)',skipped:true,round:HOST.round});
+    }
+    HOST.progress[pid]=HOST.chains; HOST.submitted[pid]=true;
+  });
+  hostEndRound();
+}
+function hostEndRound(){
+  clearTimeout(HOST._hostTimer);
+  HOST.round++;
+  if(HOST.round>=HOST.totalRounds){
+    HOST.phase='reveal';
+    HOST.revealAlbum=0;
+    hostBroadcastRoom();
+  }else{
+    setTimeout(()=>hostBeginRound(),700);
+  }
+}
+
+/* =========================================================
+   OYUN EKRANI (herkes)
+   ========================================================= */
+let cv,ctx;
+function clearTimer(){ clearInterval(S.timerHandle); S.timerHandle=null; }
+function startTimer(dur,endsAt,onEnd){
+  clearTimer();
+  const bar=$('#gBar'), fill=$('#gBar i'), num=$('#gNum');
+  if(!dur){ num.textContent='∞'; fill.style.transform='scaleX(1)'; bar.classList.remove('low'); return; }
+  const total=dur*1000;
+  const end = endsAt || (Date.now()+total);
+  S.timerHandle=setInterval(()=>{
+    const left=Math.max(0,end-Date.now());
+    fill.style.transform='scaleX('+(left/total)+')';
+    num.textContent=Math.ceil(left/1000);
+    bar.classList.toggle('low',left<10000);
+    const sec=Math.ceil(left/1000);
+    if(sec<=5 && sec>0 && sec!==S.lastTick && !S.submitted){ S.lastTick=sec; sfx('tick'); }
+    if(left<=0){ clearTimer(); onEnd&&onEnd(); }
+  },100);
+}
+
+function onAssign(a){
+  const sameRound = S.assign && S.assign.round===a.round;   // aynı turun 2. 3. görevi mi?
+  S.submitted=false; S.phase=a.kind; S.assign=a; S.lastTick=-1;
+  show('game');
+  sfx('next');
+  $('#gRound').textContent='Tur '+(a.round+1)+'/'+a.total+(a.slots>1?' · Zincir '+(a.slot+1)+'/'+a.slots:'');
+  const body=$('#gBody');
+  const rm=a.rmode;
+  if(a.kind==='write'){
+    body.innerHTML=`
+      <div class="write-card card tilt1">
+        <div class="prompt-box"><div class="cap">Bir cümle yaz, arkadaşın onu çizecek</div></div>
+        <textarea id="wIn" maxlength="90" placeholder="Örn. Bisiklet süren bir zürafa" autofocus></textarea>
+        <div class="under"><span>Saçma ve çizilebilir olsun 😄</span><span id="wCnt">0/90</span></div>
+        <div class="done-bar">
+          <button class="btn ghost" id="btnDice" title="Rastgele öneri">🎲 Öner</button>
+          <button class="btn rose" id="btnSend">Gönder</button>
+        </div>
+      </div>
+      <div id="dots"></div>`;
+    const t=$('#wIn'); t.oninput=()=>$('#wCnt').textContent=t.value.length+'/90';
+    $('#btnDice').onclick=()=>{ t.value=a.seed||PROMPTS[rnd(PROMPTS.length)]; t.oninput(); };
+    $('#btnSend').onclick=()=>submitWrite('write');
+    startTimer(a.duration,a.endsAt,()=>submitWrite('write',true));
+    setTimeout(()=>t.focus(),50);
+  }
+  else if(a.kind==='guess'){
+    body.innerHTML=`
+      <div class="prompt-box"><div class="cap">Bu çizim ne? Tahmin et ve yaz</div></div>
+      <div class="see-img" id="seeBox"></div>
+      <div class="write-card card tilt2" style="margin-top:18px">
+        <textarea id="wIn" maxlength="90" placeholder="Ne çizmiş olabilir?"></textarea>
+        <div class="under"><span>Aklına ilk gelen şeyi yaz</span><span id="wCnt">0/90</span></div>
+        <div class="done-bar"><button class="btn rose" id="btnSend">Gönder</button></div>
+      </div>
+      <div id="dots"></div>`;
+    renderPrevInto($('#seeBox'),a.prev);
+    const t=$('#wIn'); t.oninput=()=>$('#wCnt').textContent=t.value.length+'/90';
+    $('#btnSend').onclick=()=>submitWrite('guess');
+    startTimer(a.duration,a.endsAt,()=>submitWrite('guess',true));
+  }
+  else if(a.kind==='draw'){
+    const text=a.prev&&a.prev.type==='text'?a.prev.data:null;
+    const cap = text ? `<div class="cap">Bunu çiz</div><div class="txt">${esc(text)}</div>` : (a.prev&&a.prev.type==='draw'?`<div class="cap">Bu çizimi taklit et / devam ettir</div>`:`<div class="cap">Serbest çiz — ilk çizim sende!</div>`);
+    body.innerHTML=`
+      <div class="prompt-box">${cap}</div>
+      ${(!text&&a.prev&&a.prev.type==='draw')?`<div class="see-img" id="seeBox" style="max-width:260px;margin-bottom:14px"></div>`:''}
+      <div class="draw-layout">
+        <div class="tools" id="tools">
+          <button class="tool on" data-tool="pen" title="Kalem" aria-label="Kalem"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+          <button class="tool" data-tool="eraser" title="Silgi" aria-label="Silgi"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 21-4.3-4.3a1 1 0 0 1 0-1.4l9.6-9.6a2 2 0 0 1 2.8 0l5.6 5.6a2 2 0 0 1 0 2.8L13 21"/><path d="M22 21H7"/><path d="m5 11 9 9"/></svg></button>
+          <button class="tool" data-tool="fill" title="Boya kovası" aria-label="Boya kovası"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z"/><path d="m5 2 5 5"/><path d="M2 13h15"/><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4Z" fill="currentColor"/></svg></button>
+          <button class="tool" data-tool="line" title="Çizgi" aria-label="Çizgi"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 19 19 5"/></svg></button>
+          <button class="tool" data-tool="rect" title="Dikdörtgen" aria-label="Dikdörtgen"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><rect x="4" y="6" width="16" height="12" rx="1.5"/></svg></button>
+          <button class="tool" data-tool="circle" title="Daire" aria-label="Daire"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="8"/></svg></button>
+          <button class="tool" id="btnUndo" title="Geri al" aria-label="Geri al"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button>
+          <button class="tool" id="btnRedo" title="İleri al" aria-label="İleri al"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button>
+          <button class="tool" id="btnClear" title="Temizle" aria-label="Temizle"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="m19 6-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+        </div>
+        <div>
+          <div class="canvas-wrap ${rm==='kor'?'blind':''}" id="cvWrap"><canvas id="cv" width="800" height="560"></canvas></div>
+          <div class="palette" id="palette"></div>
+          <div class="size-row"><span>Kalınlık</span><input type="range" id="sizeR" min="2" max="40" value="6" aria-label="Kalınlık"><div class="size-dot"><i id="sizeDot"></i></div></div>
+        </div>
+      </div>
+      <div class="done-bar"><button class="btn rose big" id="btnSend">Çizimi gönder</button></div>
+      <div id="dots"></div>`;
+    if($('#seeBox')) renderPrevInto($('#seeBox'),a.prev);
+    initCanvas(a);
+    $('#btnSend').onclick=()=>submitDraw();
+    startTimer(a.duration,a.endsAt,()=>submitDraw(true));
+  }
+  renderWaitDots();
+}
+
+function renderPrevInto(el,prev){
+  if(!prev){ el.innerHTML='<div style="padding:30px;text-align:center;line-height:1.3">—</div>'; return; }
+  if(prev.type==='draw'){
+    if(!prev.data){ el.innerHTML='<div style="padding:40px;text-align:center;font-size:18px;line-height:1.3;color:#666">(boş bırakılmış)</div>'; return; }
+    el.innerHTML='<img alt="Çizim" src="'+prev.data+'">';
+  }else{
+    el.innerHTML='<div style="padding:26px;text-align:center;font-size:22px;background:var(--white);line-height:1.3">'+esc(prev.data)+'</div>';
+  }
+}
+
+function submitWrite(kind,auto){
+  if(S.submitted) return;
+  const t=($('#wIn')||{}).value||'';
+  const val=t.trim();
+  if(!val && !auto){ sfx('err'); toast('Boş gönderme 😅'); return; }
+  S.submitted=true; clearTimer();
+  const msg={t:'submit',round:S.assign.round,slot:S.assign.slot,kind:'write',data:val||'(boş bıraktı)',skipped:!val};
+  sfx(auto?'warn':'send');
+  afterSubmit(msg);
+}
+function submitDraw(auto){
+  if(S.submitted) return;
+  S.submitted=true; clearTimer();
+  let data=null;
+  if(S.strokes.length){
+    data=cv.toDataURL('image/jpeg',0.72);
+  }
+  sfx(auto?'warn':'send');
+  afterSubmit({t:'submit',round:S.assign.round,slot:S.assign.slot,kind:'draw',data,skipped:!data});
+}
+function sendSubmit(msg){
+  if(isHost) hostReceiveSubmit(myId,msg); else net.toHost(msg);
+}
+/* Gönderimden sonra ekran kararı.
+   Host için sendSubmit içinde yeni görev (onAssign) senkron gelebilir; o zaman ekranı ezme. */
+function afterSubmit(msg){
+  const doneAssign=S.assign;            // gönderdiğimiz görev
+  const last=doneAssign.slot+1>=doneAssign.slots;
+  if(!last) showNextChain();            // önce ara ekran; yeni görev gelirse onAssign bunu değiştirir
+  else showWaiting();
+  sendSubmit(msg);                      // (host'ta) yeni görev burada senkron gelirse ekran doğru kalır
+}
+function showNextChain(){
+  // host bir sonraki zincir görevini gönderene kadar kısa bir ara ekranı
+  $('#gBody').innerHTML='<div class="waitbox card tilt2"><div class="big">🔗</div><h3 style="font-size:26px;margin:6px 0">Sıradaki zincir geliyor…</h3></div>';
+}
+function showWaiting(){
+  const body=$('#gBody');
+  body.innerHTML=`<div class="waitbox card tilt1"><div class="big">⏳</div><h3 style="font-size:28px;margin:6px 0">Gönderildi!</h3><div style="color:var(--ink2)">Diğerleri bitirene kadar bekle…</div><div id="dots"></div></div>`;
+  renderWaitDots();
+}
+function renderWaitDots(){
+  const el=$('#dots'); if(!el||!room||!room.players) return;
+  const sub=room.submitted||{};
+  el.className='dots';
+  el.innerHTML=(room.order&&room.order.length?room.order:room.players.map(p=>p.id)).map(id=>{
+    const p=room.players.find(x=>x.id===id); if(!p) return '';
+    return `<div class="dot ${sub[id]?'ok':''}"><div class="av">${avatarSVG(p.avatar)}</div>${esc(p.name)}</div>`;
+  }).join('');
+}
+
+/* =========================================================
+   ÇİZİM MOTORU
+   ========================================================= */
+const COLORS=['#1E2A4A','#ffffff','#FF4D6D','#FF8A3D','#FFC53D','#9BE564','#2EC4B6','#5BC0EB','#3D5AFE','#8E7DFF','#F49AC2','#8B5A2B','#7a7a7a','#000000'];
+function initCanvas(a){
+  cv=$('#cv'); ctx=cv.getContext('2d',{willReadFrequently:true});
+  S.strokes=[]; S.redo=[]; S.drawing=false; S.tool='pen'; S.size=6; S.shapeStart=null; S.snap=null;
+  const mono = a.rmode==='tek';
+  S.color = mono ? '#1E2A4A' : '#1E2A4A';
+  const mirror = a.rmode==='tersyz';
+  S.mirror=mirror;
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+  // Palet
+  const pal=$('#palette'); pal.innerHTML='';
+  if(mono){
+    const c=COLORS[0]; const b=document.createElement('button'); b.className='pc sel'; b.style.background=c; b.setAttribute('aria-label','Tek renk'); pal.appendChild(b);
+    const info=document.createElement('span'); info.style.cssText='font-size:13px;color:var(--ink2)'; info.textContent='Tek renk modu'; pal.appendChild(info);
+  }else{
+    COLORS.forEach((c,i)=>{ const b=document.createElement('button'); b.className='pc'+(i===0?' sel':''); b.style.background=c; b.setAttribute('aria-label','Renk '+c); b.onclick=()=>{ S.color=c; if(S.tool==='eraser') setTool('pen'); $$('#palette .pc').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); }; pal.appendChild(b); });
+    const cu=document.createElement('label'); cu.className='pc custom'; cu.innerHTML='<input type="color" aria-label="Özel renk">'; cu.querySelector('input').oninput=e=>{ S.color=e.target.value; $$('#palette .pc').forEach(x=>x.classList.remove('sel')); cu.classList.add('sel'); if(S.tool==='eraser') setTool('pen'); }; pal.appendChild(cu);
+  }
+  $$('#tools .tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
+  if(mono){ $$('#tools .tool[data-tool="fill"]').forEach(b=>b.disabled=false); }
+  $('#btnUndo').onclick=undo; $('#btnRedo').onclick=redo; $('#btnClear').onclick=clearAll;
+  const sz=$('#sizeR'); const upd=()=>{ S.size=+sz.value; const d=$('#sizeDot'); d.style.width=d.style.height=Math.min(30,S.size)+'px'; }; sz.oninput=upd; upd();
+  // Pointer olayları
+  const wrap=$('#cvWrap');
+  cv.addEventListener('pointerdown',pDown); cv.addEventListener('pointermove',pMove);
+  window.addEventListener('pointerup',pUp); cv.addEventListener('pointercancel',pUp);
+  cv.addEventListener('contextmenu',e=>e.preventDefault());
+  if(a.rmode==='kor'){ /* kör: tuval gizli ama çizim devam eder */ cv.style.opacity='0'; }
+}
+function setTool(t){ S.tool=t; $$('#tools .tool[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t)); }
+function pos(e){
+  const r=cv.getBoundingClientRect();
+  let x=(e.clientX-r.left)*(cv.width/r.width), y=(e.clientY-r.top)*(cv.height/r.height);
+  if(S.mirror) x=cv.width-x;
+  return {x,y};
+}
+function pDown(e){
+  if(S.submitted) return;
+  e.preventDefault();
+  try{cv.setPointerCapture(e.pointerId)}catch(_){}
+  const p=pos(e);
+  if(S.tool==='fill'){ floodFill(Math.round(p.x),Math.round(p.y),S.color); commit({tool:'fill'}); sfx('fill'); return; }
+  S.drawing=true; S.redo=[]; updRedo();
+  S.snap=ctx.getImageData(0,0,cv.width,cv.height);
+  S.last=p; S.shapeStart=p;
+  if(S.tool==='pen'||S.tool==='eraser'){
+    ctx.beginPath(); ctx.fillStyle=S.tool==='eraser'?'#fff':S.color; ctx.arc(p.x,p.y,S.size/2,0,Math.PI*2); ctx.fill();
+  }
+}
+function pMove(e){
+  if(!S.drawing) return;
+  e.preventDefault();
+  const p=pos(e);
+  if(S.tool==='pen'||S.tool==='eraser'){
+    const now=performance.now(); if(now-(S.lastBrush||0)>90){ S.lastBrush=now; sfx('brush'); }
+    ctx.strokeStyle=S.tool==='eraser'?'#fff':S.color; ctx.lineWidth=S.size; ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath(); ctx.moveTo(S.last.x,S.last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); S.last=p;
+  }else{
+    ctx.putImageData(S.snap,0,0);
+    ctx.strokeStyle=S.color; ctx.lineWidth=S.size; ctx.lineCap='round';
+    const a=S.shapeStart;
+    ctx.beginPath();
+    if(S.tool==='line'){ ctx.moveTo(a.x,a.y); ctx.lineTo(p.x,p.y); }
+    else if(S.tool==='rect'){ ctx.rect(a.x,a.y,p.x-a.x,p.y-a.y); }
+    else if(S.tool==='circle'){ const rx=Math.abs(p.x-a.x)/2, ry=Math.abs(p.y-a.y)/2; ctx.ellipse((a.x+p.x)/2,(a.y+p.y)/2,rx,ry,0,0,Math.PI*2); }
+    ctx.stroke();
+  }
+}
+function pUp(){
+  if(!S.drawing) return;
+  S.drawing=false; commit({tool:S.tool});
+}
+function commit(){
+  // Geri alma için tüm tuval anlık görüntüsü tut (basit ve güvenilir)
+  S.strokes.push(ctx.getImageData(0,0,cv.width,cv.height));
+  if(S.strokes.length>30) S.strokes.shift();
+  updRedo();
+}
+let undoBase=null;
+function updRedo(){ const b=$('#btnRedo'); if(b) b.disabled=!S.redo.length; const u=$('#btnUndo'); if(u) u.disabled=!S.strokes.length; }
+function undo(){
+  if(!S.strokes.length) return;
+  sfx('undo');
+  S.redo.push(S.strokes.pop());
+  const prev=S.strokes[S.strokes.length-1];
+  if(prev) ctx.putImageData(prev,0,0); else { ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height); }
+  updRedo();
+}
+function redo(){
+  if(!S.redo.length) return;
+  const img=S.redo.pop(); S.strokes.push(img); ctx.putImageData(img,0,0); updRedo();
+}
+function clearAll(){
+  if(!S.strokes.length) return;
+  sfx('err');
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
+  S.strokes.push(ctx.getImageData(0,0,cv.width,cv.height)); S.redo=[]; updRedo();
+}
+function hexToRgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(x=>x+x).join(''); const n=parseInt(h,16); return [n>>16&255,n>>8&255,n&255]; }
+function floodFill(sx,sy,hex){
+  const w=cv.width,h=cv.height;
+  sx|=0; sy|=0;
+  if(sx<0||sy<0||sx>=w||sy>=h) return;
+  const img=ctx.getImageData(0,0,w,h); const d=img.data;
+  const i0=(sy*w+sx)*4; const tr=d[i0],tg=d[i0+1],tb=d[i0+2];
+  const [r,g,b]=hexToRgb(hex);
+  if(Math.abs(tr-r)<4&&Math.abs(tg-g)<4&&Math.abs(tb-b)<4) return;
+  const tol=60;                                   // yumuşatılmış kenarları da yakalamak için geniş tolerans
+  const seen=new Uint8Array(w*h);
+  const match=(x,y)=>{ if(x<0||y<0||x>=w||y>=h) return false; if(seen[y*w+x]) return false;
+    const i=(y*w+x)*4; return Math.abs(d[i]-tr)<=tol&&Math.abs(d[i+1]-tg)<=tol&&Math.abs(d[i+2]-tb)<=tol; };
+  const stack=[sx,sy];
+  while(stack.length){
+    const y=stack.pop(), x0=stack.pop();
+    if(!match(x0,y)) continue;
+    let xl=x0, xr=x0;
+    while(match(xl-1,y)) xl--;
+    while(match(xr+1,y)) xr++;
+    for(let x=xl;x<=xr;x++){ const i=(y*w+x)*4; d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=255; seen[y*w+x]=1; }
+    // dolgunun kenar piksellerini bir halka daha genişlet (beyaz halka kalmasın)
+    for(let x=xl-1;x<=xr+1;x++){
+      for(const yy of [y-1,y+1]){
+        if(yy<0||yy>=h||x<0||x>=w) continue;
+        if(match(x,yy)){ stack.push(x,yy); }
+      }
+    }
+  }
+  // kenar yumuşatma: boyanan bölgeye komşu, boyanmamış açık renkli pikselleri de doldur
+  for(let y=0;y<h;y++){ for(let x=0;x<w;x++){
+    const k=y*w+x; if(seen[k]) continue;
+    const i=k*4; const near=(x>0&&seen[k-1])||(x<w-1&&seen[k+1])||(y>0&&seen[k-w])||(y<h-1&&seen[k+w]);
+    if(!near) continue;
+    const lum=(d[i]+d[i+1]+d[i+2])/3, tl=(tr+tg+tb)/3;
+    if(Math.abs(lum-tl)<=Math.abs(tl-30)*0.85 && lum>tl-95 && lum<=255){ // hedef renge yakın açık ton
+      const mix=Math.min(1,Math.max(0,(lum-(tl-95))/95));
+      d[i]=Math.round(d[i]*(1-mix)+r*mix); d[i+1]=Math.round(d[i+1]*(1-mix)+g*mix); d[i+2]=Math.round(d[i+2]*(1-mix)+b*mix);
+    }
+  }}
+  ctx.putImageData(img,0,0);
+}
+// Klavye kısayolları
+window.addEventListener('keydown',e=>{
+  if(!$('#screen-game').classList.contains('active')||S.phase!=='draw') return;
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){ e.preventDefault(); redo(); }
+});
+
+/* =========================================================
+   REVEAL (Sonuçlar)
+   ========================================================= */
+let revTimers=[];
+function renderReveal(){
+  if(!room||!room.albums) return;
+  const al=room.albums;
+  const ai=clamp(room.revealAlbum||0,0,al.length-1);
+  const A=al[ai];
+  const owner=room.players.find(p=>p.id===A.owner)||{name:'?',avatar:{face:0,color:0}};
+  $('#revTitle').textContent='Albüm '+(ai+1)+'/'+al.length+((room.chains||1)>1?' · Zincir '+((A.chain||0)+1):'');
+  $('#revOwner').innerHTML=`<div class="rev-owner"><div class="av">${avatarSVG(owner.avatar)}</div><span>${esc(owner.name)} bu zinciri başlattı</span></div>`;
+  // sekmeler
+  $('#albumTabs').innerHTML=al.map((a,i)=>{
+    const o=room.players.find(p=>p.id===a.owner)||{name:'?',avatar:{face:0,color:0}};
+    return `<button class="album-tab ${i===ai?'on':''}" data-i="${i}"><div class="av">${avatarSVG(o.avatar)}</div>${esc(o.name)}${(room.chains||1)>1?' <small style="opacity:.7">#'+((a.chain||0)+1)+'</small>':''}</button>`;
+  }).join('');
+  $$('#albumTabs .album-tab').forEach(b=>b.onclick=()=>{ if(isHost){ HOST.revealAlbum=+b.dataset.i; hostBroadcastRoom(); } else { toast('Albümü sadece oda sahibi değiştirir'); } });
+  // zincir
+  const chain=$('#chain');
+  const key=ai+'|'+A.links.length;
+  chain.innerHTML=A.links.map((l,idx)=>{
+    const p=room.players.find(x=>x.id===l.by)||{name:'?',avatar:{face:0,color:0}};
+    const who=`<div class="who"><div class="av">${avatarSVG(p.avatar)}</div><span>${esc(p.name)}</span></div>`;
+    let inner='';
+    if(l.type==='draw'){
+      if(l.skipped||!l.data) inner='<div class="bubble">(çizim yapılmamış)</div>';
+      else inner=`<div class="bubble"><img alt="Çizim" src="${l.data}"></div>`;
+    }else inner=`<div class="bubble">${esc(l.data)}</div>`;
+    return `<div class="link ${l.type==='draw'?'draw':'text'} ${idx===0?'first':''} ${l.skipped?'skipped':''}" style="animation-delay:${idx*0.18}s">${who}${inner}</div>`;
+  }).join('');
+  // zincir öğeleri belirdikçe ses çal
+  revTimers.forEach(clearTimeout); revTimers=[];
+  A.links.forEach((l,idx)=>{ revTimers.push(setTimeout(()=>sfx(l.type==='draw'?'reveal':'pop'),idx*180+120)); });
+  // kontroller
+  const c=$('#revControls');
+  if(isHost){
+    const last=ai>=al.length-1;
+    c.innerHTML=`
+      ${ai>0?'<button class="btn ghost" id="revPrev">◀ Önceki</button>':''}
+      ${!last?'<button class="btn teal" id="revNext">Sonraki albüm ▶</button>':''}
+      <button class="btn rose" id="revAgain">Tekrar oyna</button>
+      <button class="btn ghost" id="revExit">Çık</button>`;
+    if($('#revPrev')) $('#revPrev').onclick=()=>{ HOST.revealAlbum=ai-1; hostBroadcastRoom(); };
+    if($('#revNext')) $('#revNext').onclick=()=>{ HOST.revealAlbum=ai+1; hostBroadcastRoom(); confetti(18); };
+    $('#revAgain').onclick=hostPlayAgain;
+    $('#revExit').onclick=()=>leaveRoom();
+  }else{
+    c.innerHTML=`<div style="color:var(--ink2)">Albümleri oda sahibi gezdiriyor…</div><button class="btn ghost" id="revExit">Çık</button>`;
+    $('#revExit').onclick=()=>leaveRoom();
+  }
+}
+function hostPlayAgain(){
+  HOST.phase='lobby'; HOST.albums=[]; HOST.round=0; HOST.submitted={}; HOST.revealAlbum=0;
+  HOST.players=HOST.players.filter(p=>p.connected!==false);
+  hostBroadcastRoom();
+  enterLobby();
+}
+</script>
+</body>
+</html>
