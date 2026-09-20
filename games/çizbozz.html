@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ÇizBozz</title>
+<meta name="theme-color" content="#F2EBDD" id="metaTheme">
+<title>ÇizBozz — Çiz, Bozdur, Gül</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -28,6 +29,7 @@
 </script>
 <style>
 :root{
+  color-scheme:light;
   --paper:#F2EBDD; --paper2:#E9DFCB; --ink:#1E2A4A; --ink2:#37456e;
   --on-color:#1E2A4A; --on-rose:#172040; --border:var(--ink); --shadow-c:var(--ink); --sunk:#E9DFCB;
   --rose:#FF4D6D; --sun:#FFC53D; --teal:#2EC4B6; --white:#FFFCF5;
@@ -35,6 +37,7 @@
   --r: 18px;
 }
 :root[data-theme="dark"]{
+  color-scheme:dark;
   /* Koyu palet: gece mavisi, 3 kademe yüzey. Yazı kremi, kenarlıklar yumuşak (parlak çizgi yok). */
   --paper:#0F1428;      /* sayfa zemini  */
   --paper2:#1A2140;     /* girintili/ikincil yüzey */
@@ -102,7 +105,8 @@ label.lbl{display:block;font-size:14px;margin:0 0 6px;color:var(--ink2)}
 .swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .sw{width:32px;height:32px;border-radius:50%;border:3px solid var(--border);cursor:pointer;padding:0}
 .sw.sel{box-shadow:0 0 0 3px var(--paper),0 0 0 6px var(--ink)}
-.face-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%}
+.face-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%;position:relative;max-height:min(232px,34vh);overflow-y:auto;overscroll-behavior:contain;padding:4px 6px 8px 4px;margin:0 -4px}
+.face-count{font-size:12px;color:var(--ink2);text-align:center;margin-top:-4px}
 .face-opt{aspect-ratio:1;border:3px solid var(--border);border-radius:12px;background:var(--paper2);padding:2px;cursor:pointer;overflow:hidden}
 .face-opt svg{width:100%;height:100%}
 .face-opt.sel{background:var(--sun);box-shadow:0 3px 0 var(--shadow-c)}
@@ -371,6 +375,23 @@ label.lbl{display:block;font-size:14px;margin:0 0 6px;color:var(--ink2)}
 /* ----- Açık temada da düzeltilen küçük kontrast sorunları ----- */
 #plCount{color:var(--ink2)!important;opacity:1!important}
 
+
+/* ===== Kaydırma çubuğu: temaya uyumlu (sayfa + modal + yüz seçici) ===== */
+:root{--sb-track:transparent;--sb-thumb:#b9ad95;--sb-thumb-hover:#9a8e76}
+:root[data-theme="dark"]{--sb-track:#0B0F20;--sb-thumb:#3A4578;--sb-thumb-hover:#56639C}
+html{scrollbar-color:var(--sb-thumb) var(--sb-track);scrollbar-width:auto}
+*{scrollbar-color:var(--sb-thumb) transparent;scrollbar-width:thin}
+html{scrollbar-width:auto}
+::-webkit-scrollbar{width:14px;height:14px}
+::-webkit-scrollbar-track{background:var(--sb-track)}
+::-webkit-scrollbar-thumb{background:var(--sb-thumb);border-radius:99px;border:3px solid var(--sb-track);background-clip:padding-box;min-height:40px}
+::-webkit-scrollbar-thumb:hover{background:var(--sb-thumb-hover);background-clip:padding-box}
+::-webkit-scrollbar-corner{background:var(--sb-track)}
+/* içerideki küçük kaydırma alanları biraz daha ince */
+.face-picker::-webkit-scrollbar,.modal .card::-webkit-scrollbar,.adm-menu::-webkit-scrollbar{width:10px}
+.face-picker::-webkit-scrollbar-track,.modal .card::-webkit-scrollbar-track{background:transparent}
+.face-picker::-webkit-scrollbar-thumb{background:var(--sb-thumb);border:2px solid transparent;background-clip:padding-box}
+
 /* toast + modal */
 #toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,120px);background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:14px;border:3px solid var(--paper);z-index:200;transition:transform .3s cubic-bezier(.3,1.5,.5,1);max-width:90vw;text-align:center}
 #toast.show{transform:translate(-50%,0)}
@@ -426,6 +447,7 @@ body.ingame .topbar-mini{position:fixed;top:auto;bottom:14px;right:12px}
             <button class="btn ghost" id="avRand" aria-label="Rastgele">🎲</button>
             <button class="btn" id="avNext" aria-label="Sonraki yüz">▶</button>
           </div>
+          <div class="face-count" id="faceCount" aria-live="polite"></div>
           <div class="face-picker" id="facePicker"></div>
           <div class="swatches" id="swatches"></div>
         </div>
@@ -567,9 +589,58 @@ const FACES=[
  (c)=>`<path d="M30 44 Q36 34 42 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M58 44 Q64 34 70 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M30 62 Q50 84 70 62 Z" fill="#fff" stroke="#1E2A4A" stroke-width="4" stroke-linejoin="round"/>`,
  (c)=>`<circle cx="35" cy="44" r="5" fill="#1E2A4A"/><circle cx="65" cy="44" r="5" fill="#1E2A4A"/><circle cx="26" cy="58" r="6" fill="#ff8fa3" opacity=".7"/><circle cx="74" cy="58" r="6" fill="#ff8fa3" opacity=".7"/><path d="M42 62 Q50 70 58 62" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round"/>`,
  (c)=>`<path d="M26 46 L44 46" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M56 46 L74 46" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M36 70 Q50 60 64 70" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
- (c)=>`<text x="35" y="52" font-size="22" text-anchor="middle" fill="#1E2A4A" font-family="Arial" font-weight="900">★</text><text x="65" y="52" font-size="22" text-anchor="middle" fill="#1E2A4A" font-family="Arial" font-weight="900">★</text><ellipse cx="50" cy="70" rx="9" ry="7" fill="#1E2A4A"/>`,
+ (c)=>`<polygon points="35.0,32.0 37.7,39.3 45.5,39.6 39.4,44.4 41.5,51.9 35.0,47.6 28.5,51.9 30.6,44.4 24.5,39.6 32.3,39.3" fill="#1E2A4A" stroke="#1E2A4A" stroke-width="1.5" stroke-linejoin="round"/><polygon points="65.0,32.0 67.7,39.3 75.5,39.6 69.4,44.4 71.5,51.9 65.0,47.6 58.5,51.9 60.6,44.4 54.5,39.6 62.3,39.3" fill="#1E2A4A" stroke="#1E2A4A" stroke-width="1.5" stroke-linejoin="round"/><ellipse cx="50" cy="70" rx="9" ry="7" fill="#1E2A4A"/>`,
  (c)=>`<circle cx="35" cy="42" r="5" fill="#1E2A4A"/><circle cx="65" cy="42" r="5" fill="#1E2A4A"/><path d="M40 66 Q50 58 60 66" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M50 30 L50 20 M44 22 L50 16 L56 22" stroke="#1E2A4A" stroke-width="3" fill="none" stroke-linecap="round"/>`,
- (c)=>`<path d="M28 44 Q35 50 42 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M58 44 Q65 50 72 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M36 66 Q50 74 64 66" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`
+ (c)=>`<path d="M28 44 Q35 50 42 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M58 44 Q65 50 72 44" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M36 66 Q50 74 64 66" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+/* ---- Yeni yüzler (12-35): sıra değiştirilmez, kayıtlı seçimler bozulmasın ---- */
+ /* 12 Kahkaha: kısılmış gözler, geniş açık ağız + dil */
+ (c)=>`<path d="M27 42 Q35 34 43 42" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M57 42 Q65 34 73 42" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M28 58 Q50 92 72 58 Z" fill="#1E2A4A" stroke="#1E2A4A" stroke-width="4" stroke-linejoin="round"/><path d="M39 72 Q50 66 61 72 Q57 80 50 80 Q43 80 39 72Z" fill="#ff8fa3"/>`,
+ /* 13 Kalpli gözler */
+ (c)=>`<path d="M35 50 C22 42 26 32 35 37 C44 32 48 42 35 50Z" fill="#ff3d63" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"/><path d="M65 50 C52 42 56 32 65 37 C74 32 78 42 65 50Z" fill="#ff3d63" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"/><path d="M36 64 Q50 78 64 64" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ /* 14 Uykulu: kapalı gözler, "z z" */
+ (c)=>`<path d="M27 46 Q35 52 43 46" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M57 46 Q65 52 73 46" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="70" rx="6" ry="5" fill="#1E2A4A"/><path d="M56 26 h9 l-9 9 h9" stroke="#1E2A4A" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M68 15 h6 l-6 6 h6" stroke="#1E2A4A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+ /* 15 Şaşkın: iri gözler, "o" ağız, kaşlar yukarıda */
+ (c)=>`<path d="M26 28 Q35 22 44 28" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M56 28 Q65 22 74 28" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="35" cy="42" r="9" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="65" cy="42" r="9" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="35" cy="42" r="3" fill="#1E2A4A"/><circle cx="65" cy="42" r="3" fill="#1E2A4A"/><ellipse cx="50" cy="72" rx="8" ry="10" fill="#1E2A4A"/>`,
+ /* 16 Kızgın: çatık kaşlar */
+ (c)=>`<path d="M25 34 L44 42" stroke="#1E2A4A" stroke-width="5.5" stroke-linecap="round"/><path d="M75 34 L56 42" stroke="#1E2A4A" stroke-width="5.5" stroke-linecap="round"/><circle cx="35" cy="50" r="4.5" fill="#1E2A4A"/><circle cx="65" cy="50" r="4.5" fill="#1E2A4A"/><path d="M34 76 Q50 62 66 76" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ /* 17 Üzgün: gözyaşı */
+ (c)=>`<path d="M26 38 L42 34" stroke="#1E2A4A" stroke-width="4" stroke-linecap="round"/><path d="M74 38 L58 34" stroke="#1E2A4A" stroke-width="4" stroke-linecap="round"/><circle cx="35" cy="47" r="4.5" fill="#1E2A4A"/><circle cx="65" cy="47" r="4.5" fill="#1E2A4A"/><path d="M36 74 Q50 62 64 74" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M33 55 Q29 63 33 67 Q37 63 33 55Z" fill="#7fd4ff" stroke="#1E2A4A" stroke-width="2"/>`,
+ /* 18 Dil çıkaran */
+ (c)=>`<path d="M27 42 Q35 34 43 42" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="65" cy="42" r="5" fill="#1E2A4A"/><path d="M32 62 Q50 72 68 62" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M44 66 L44 80 Q50 88 56 80 L56 66Z" fill="#ff8fa3" stroke="#1E2A4A" stroke-width="3" stroke-linejoin="round"/><path d="M50 68 L50 78" stroke="#1E2A4A" stroke-width="2" stroke-linecap="round"/>`,
+ /* 19 Kalpli gülüş: yanaklar + kalp göz olmadan sevimli */
+ (c)=>`<circle cx="35" cy="44" r="6" fill="#1E2A4A"/><circle cx="65" cy="44" r="6" fill="#1E2A4A"/><circle cx="37" cy="42" r="2" fill="#fff"/><circle cx="67" cy="42" r="2" fill="#fff"/><circle cx="24" cy="60" r="6" fill="#ff8fa3" opacity=".75"/><circle cx="76" cy="60" r="6" fill="#ff8fa3" opacity=".75"/><path d="M40 62 Q45 68 50 62 Q55 68 60 62" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+ /* 20 Havalı: güneş gözlüğü + yan gülüş */
+ (c)=>`<path d="M20 38 H80" stroke="#1E2A4A" stroke-width="4" stroke-linecap="round"/><path d="M24 38 H46 V50 Q46 56 40 56 H30 Q24 56 24 50Z" fill="#1E2A4A"/><path d="M54 38 H76 V50 Q76 56 70 56 H60 Q54 56 54 50Z" fill="#1E2A4A"/><path d="M28 42 L34 42" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><path d="M58 42 L64 42" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/><path d="M36 68 Q52 78 68 64" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ /* 21 Yıldız gözlü (SVG yıldız: cihaz fontuna bağlı değil) */
+ (c)=>`<path d="M35 32 L38.2 39.6 L46.4 40.4 L40.2 45.8 L42.1 53.8 L35 49.6 L27.9 53.8 L29.8 45.8 L23.6 40.4 L31.8 39.6Z" fill="#FFD24A" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"/><path d="M65 32 L68.2 39.6 L76.4 40.4 L70.2 45.8 L72.1 53.8 L65 49.6 L57.9 53.8 L59.8 45.8 L53.6 40.4 L61.8 39.6Z" fill="#FFD24A" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"/><path d="M32 66 Q50 84 68 66 Z" fill="#fff" stroke="#1E2A4A" stroke-width="4" stroke-linejoin="round"/>`,
+ /* 22 Maske/kapalı ağız: fermuar */
+ (c)=>`<circle cx="35" cy="42" r="5" fill="#1E2A4A"/><circle cx="65" cy="42" r="5" fill="#1E2A4A"/><path d="M30 68 H70" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M36 63 V73 M42 63 V73 M48 63 V73 M54 63 V73 M60 63 V73 M66 63 V73" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"/>`,
+ /* 23 Düşünen: tek kaş yukarıda + yan bakış */
+ (c)=>`<path d="M26 32 L44 32" stroke="#1E2A4A" stroke-width="4.5" stroke-linecap="round"/><path d="M56 26 Q66 22 74 30" stroke="#1E2A4A" stroke-width="4.5" fill="none" stroke-linecap="round"/><circle cx="35" cy="44" r="8" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="65" cy="44" r="8" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="31" cy="44" r="3.2" fill="#1E2A4A"/><circle cx="61" cy="44" r="3.2" fill="#1E2A4A"/><path d="M38 70 Q50 66 62 72" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ /* 24 Sıkılmış */
+ (c)=>`<path d="M24 46 H46 V54 Q46 58 40 58 H30 Q24 58 24 54Z" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><path d="M54 46 H76 V54 Q76 58 70 58 H60 Q54 58 54 54Z" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><path d="M24 46 H46 M54 46 H76" stroke="#1E2A4A" stroke-width="6" stroke-linecap="round"/><circle cx="35" cy="53" r="2.6" fill="#1E2A4A"/><circle cx="65" cy="53" r="2.6" fill="#1E2A4A"/><path d="M38 72 H62" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/>`,
+ /* 25 Sinirli/kırmızı yanaklı: buhar */
+ (c)=>`<path d="M25 38 L44 44" stroke="#1E2A4A" stroke-width="5.5" stroke-linecap="round"/><path d="M75 38 L56 44" stroke="#1E2A4A" stroke-width="5.5" stroke-linecap="round"/><circle cx="36" cy="52" r="4" fill="#1E2A4A"/><circle cx="64" cy="52" r="4" fill="#1E2A4A"/><circle cx="22" cy="60" r="6" fill="#ff3d3d" opacity=".55"/><circle cx="78" cy="60" r="6" fill="#ff3d3d" opacity=".55"/><path d="M30 68 H70 V78 Q70 82 66 82 H34 Q30 82 30 78Z" fill="#fff" stroke="#1E2A4A" stroke-width="3.5" stroke-linejoin="round"/><path d="M40 68 V82 M50 68 V82 M60 68 V82" stroke="#1E2A4A" stroke-width="2.5"/><path d="M71 20 l4 -6 M71 20 l6 3 M71 20 l1 7 M71 20 l-5 -3" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"/>`,
+ /* 26 Ter döken / gergin */
+ (c)=>`<circle cx="35" cy="46" r="8" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="65" cy="46" r="8" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="35" cy="46" r="2.5" fill="#1E2A4A"/><circle cx="65" cy="46" r="2.5" fill="#1E2A4A"/><path d="M34 74 Q40 68 45 74 Q50 80 55 74 Q60 68 66 74" stroke="#1E2A4A" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M79 17 Q89 32 79 40 Q69 32 79 17Z" fill="#7fd4ff" stroke="#1E2A4A" stroke-width="3" stroke-linejoin="round"/><path d="M76 30 Q76 35 79 36" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+ /* 27 Kedi yüzü: kulaklar + bıyık */
+ (c)=>`<path d="M18 30 L26 10 L42 24Z" fill="#1E2A4A"/><path d="M82 30 L74 10 L58 24Z" fill="#1E2A4A"/><path d="M24 26 L27 16 L35 23Z" fill="#ff8fa3"/><path d="M76 26 L73 16 L65 23Z" fill="#ff8fa3"/><ellipse cx="35" cy="46" rx="4.5" ry="6" fill="#1E2A4A"/><ellipse cx="65" cy="46" rx="4.5" ry="6" fill="#1E2A4A"/><path d="M46 60 H54 L50 65Z" fill="#ff8fa3" stroke="#1E2A4A" stroke-width="2" stroke-linejoin="round"/><path d="M50 65 Q44 72 38 68 M50 65 Q56 72 62 68" stroke="#1E2A4A" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M14 56 L30 60 M14 66 L30 64 M86 56 L70 60 M86 66 L70 64" stroke="#1E2A4A" stroke-width="2.5" stroke-linecap="round"/>`,
+ /* 28 Robot */
+ (c)=>`<path d="M50 20 V27" stroke="#1E2A4A" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="17" r="5" fill="#ff3d63" stroke="#1E2A4A" stroke-width="2.5"/><rect x="24" y="33" width="18" height="18" rx="4" fill="#fff" stroke="#1E2A4A" stroke-width="3.5"/><rect x="58" y="33" width="18" height="18" rx="4" fill="#fff" stroke="#1E2A4A" stroke-width="3.5"/><rect x="30" y="39" width="6" height="6" fill="#1E2A4A"/><rect x="64" y="39" width="6" height="6" fill="#1E2A4A"/><rect x="30" y="62" width="40" height="14" rx="3" fill="#fff" stroke="#1E2A4A" stroke-width="3.5"/><path d="M40 62 V76 M50 62 V76 M60 62 V76" stroke="#1E2A4A" stroke-width="2.5"/>`,
+ /* 29 Hayalet/korkmuş: dalgalı ağız, kocaman gözler */
+ (c)=>`<ellipse cx="35" cy="42" rx="9" ry="12" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><ellipse cx="65" cy="42" rx="9" ry="12" fill="#fff" stroke="#1E2A4A" stroke-width="3"/><circle cx="35" cy="45" r="4" fill="#1E2A4A"/><circle cx="65" cy="45" r="4" fill="#1E2A4A"/><path d="M34 72 Q38 66 42 72 T50 72 T58 72 T66 72" stroke="#1E2A4A" stroke-width="4.5" fill="none" stroke-linecap="round"/>`,
+ /* 30 Kaşlı gülen: kalın kaş, yan sırıtış, gamze */
+ (c)=>`<path d="M25 33 Q35 27 45 33" stroke="#1E2A4A" stroke-width="6" fill="none" stroke-linecap="round"/><path d="M55 33 Q65 27 75 33" stroke="#1E2A4A" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="35" cy="46" r="5" fill="#1E2A4A"/><circle cx="65" cy="46" r="5" fill="#1E2A4A"/><path d="M32 64 Q52 82 70 62" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M71 58 Q75 62 72 66" stroke="#1E2A4A" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+ /* 31 Bıyıklı */
+ (c)=>`<circle cx="35" cy="40" r="4.5" fill="#1E2A4A"/><circle cx="65" cy="40" r="4.5" fill="#1E2A4A"/><path d="M20 62 Q30 50 50 58 Q70 50 80 62 Q68 68 50 64 Q32 68 20 62Z" fill="#1E2A4A"/><path d="M40 74 Q50 80 60 74" stroke="#1E2A4A" stroke-width="4.5" fill="none" stroke-linecap="round"/>`,
+ /* 32 Gözlüklü inek/bilgin: yuvarlak gözlük */
+ (c)=>`<circle cx="34" cy="44" r="12" fill="#fff" fill-opacity=".85" stroke="#1E2A4A" stroke-width="3.5"/><circle cx="66" cy="44" r="12" fill="#fff" fill-opacity=".85" stroke="#1E2A4A" stroke-width="3.5"/><path d="M46 42 Q50 38 54 42" stroke="#1E2A4A" stroke-width="3.5" fill="none"/><path d="M22 42 L14 38 M78 42 L86 38" stroke="#1E2A4A" stroke-width="3" stroke-linecap="round"/><circle cx="34" cy="46" r="3.5" fill="#1E2A4A"/><circle cx="66" cy="46" r="3.5" fill="#1E2A4A"/><path d="M38 70 Q50 78 62 70" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/>`,
+ /* 33 Uzaylı: büyük eğik gözler, anten */
+ (c)=>`<path d="M38 26 Q34 16 28 14 M62 26 Q66 16 72 14" stroke="#1E2A4A" stroke-width="3.5" fill="none" stroke-linecap="round"/><circle cx="28" cy="14" r="4" fill="#1E2A4A"/><circle cx="72" cy="14" r="4" fill="#1E2A4A"/><ellipse cx="33" cy="46" rx="13" ry="17" fill="#1E2A4A" transform="rotate(-18 33 46)"/><ellipse cx="67" cy="46" rx="13" ry="17" fill="#1E2A4A" transform="rotate(18 67 46)"/><ellipse cx="29" cy="40" rx="3.5" ry="5" fill="#fff" opacity=".85" transform="rotate(-18 29 40)"/><ellipse cx="63" cy="40" rx="3.5" ry="5" fill="#fff" opacity=".85" transform="rotate(18 63 40)"/><path d="M44 76 Q50 79 56 76" stroke="#1E2A4A" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+ /* 34 Ölü göz (x_x) + dil dışarıda */
+ (c)=>`<path d="M27 38 L43 54 M43 38 L27 54" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M57 38 L73 54 M73 38 L57 54" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M34 68 H66" stroke="#1E2A4A" stroke-width="5" stroke-linecap="round"/><path d="M52 68 V78 Q58 84 64 78 V68Z" fill="#ff8fa3" stroke="#1E2A4A" stroke-width="3" stroke-linejoin="round"/>`,
+ /* 35 Öpücük */
+ (c)=>`<path d="M27 42 Q35 34 43 42" stroke="#1E2A4A" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="65" cy="42" r="5" fill="#1E2A4A"/><path d="M42 66 Q46 60 50 64 Q54 60 58 66 Q60 72 50 78 Q40 72 42 66Z" fill="#ff5c7a" stroke="#1E2A4A" stroke-width="3" stroke-linejoin="round"/><path d="M76 66 C66 58 70 46 76 52 C82 46 86 58 76 66Z" fill="#ff3d63" stroke="#1E2A4A" stroke-width="2.5" stroke-linejoin="round"/>`,
 ];
 function avatarSVG(a){
   const face=FACES[a.face%FACES.length](a.color);
@@ -667,7 +738,7 @@ $('#neRetry').onclick=()=>{ $('#netErrModal').classList.remove('show'); setTimeo
 $('#netErrModal').addEventListener('click',e=>{ if(e.target.id==='netErrModal') e.target.classList.remove('show'); });
 
 /* ---------- Tema ---------- */
-function applyTheme(t){ document.documentElement.dataset.theme=t; $('#btnTheme').textContent=t==='dark'?'☀️':'🌙'; try{localStorage.setItem('cizbozz-theme',t)}catch(e){} }
+function applyTheme(t){ document.documentElement.dataset.theme=t; $('#btnTheme').textContent=t==='dark'?'☀️':'🌙'; { const m=document.getElementById('metaTheme'); if(m) m.setAttribute('content',t==='dark'?'#0F1428':'#F2EBDD'); } try{localStorage.setItem('cizbozz-theme',t)}catch(e){} }
 applyTheme((()=>{try{return localStorage.getItem('cizbozz-theme')||'light'}catch(e){return 'light'}})());
 $('#btnTheme').onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 $('#btnHelp').onclick=()=>$('#helpModal').classList.add('show');
@@ -879,6 +950,11 @@ document.addEventListener('click',e=>{ const b=e.target.closest('.btn,.mode,.fac
 function renderAvatarHome(){
   $('#avBig').innerHTML=avatarSVG(me.avatar);
   $$('#facePicker .face-opt').forEach((el,i)=>el.classList.toggle('sel',i===me.avatar.face));
+  { const fc=$('#faceCount'); if(fc) fc.textContent='Yüz '+(me.avatar.face+1)+' / '+FACES.length;
+    const box=$('#facePicker'), sel=box&&box.querySelector('.face-opt.sel');
+    if(sel){ const top=sel.offsetTop, bot=top+sel.offsetHeight;
+      if(top<box.scrollTop+4) box.scrollTop=Math.max(0,top-6);
+      else if(bot>box.scrollTop+box.clientHeight-4) box.scrollTop=bot-box.clientHeight+10; } }
   $$('#swatches .sw').forEach((el,i)=>el.classList.toggle('sel',i===me.avatar.color));
 }
 FACES.forEach((_,i)=>{ const b=document.createElement('button'); b.className='face-opt'; b.setAttribute('aria-label','Yüz '+(i+1)); b.innerHTML=avatarSVG({face:i,color:me.avatar.color}); b.onclick=()=>{me.avatar.face=i;renderAvatarHome();refreshFaceThumbs()}; $('#facePicker').appendChild(b); });
