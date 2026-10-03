@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Süper Şanslı Oyun</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #ff4757 0%, #c44569 50%, #2f1b14 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            background: linear-gradient(to top, #2f1b14 0%, #8b4513 30%, #ff6b35 60%, #ff4757 100%);
+            z-index: -1;
+        }
+
+        body::after {
+            content: '🌋';
+            position: fixed;
+            bottom: 50px;
+            left: 20%;
+            font-size: 4rem;
+            z-index: -1;
+            animation: volcano-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes volcano-glow {
+            0% { filter: drop-shadow(0 0 10px #ff4757); }
+            100% { filter: drop-shadow(0 0 20px #ff6b35); }
+        }
+
+        .game-container {
+            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 25px;
+            padding: 50px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+            text-align: center;
+            max-width: 550px;
+            width: 100%;
+            border: 3px solid rgba(255,215,0,0.3);
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ffd700, #ff6b35, #ff4757, #ffd700);
+            border-radius: 27px;
+            z-index: -1;
+            animation: border-glow 3s linear infinite;
+        }
+
+        @keyframes border-glow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .odds {
+            font-size: 1.5rem;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #fff5f5;
+            border-radius: 10px;
+            border: 2px dashed #ff6b6b;
+        }
+
+        .play-button {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .play-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(255, 107, 107, 0.4);
+        }
+
+        .play-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .timer {
+            font-size: 1.2rem;
+            color: #ff6b6b;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        .attempts {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .name-input {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .name-input input {
+            padding: 15px;
+            font-size: 1.1rem;
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            margin: 10px;
+            width: 200px;
+        }
+
+        .name-input button {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .name-input button:hover {
+            background: #45b7aa;
+        }
+
+        .certificate {
+            display: none;
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            border: 5px solid #fdcb6e;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .certificate::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255,255,255,0.1) 10px,
+                rgba(255,255,255,0.1) 20px
+            );
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .certificate-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .certificate h2 {
+            font-size: 2.5rem;
+            color: #d63031;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .certificate .winner-name {
+            font-size: 2rem;
+            color: #2d3436;
+            font-weight: bold;
+            margin: 20px 0;
+            text-decoration: underline;
+        }
+
+        .certificate .message {
+            font-size: 1.3rem;
+            color: #2d3436;
+            line-height: 1.6;
+            margin: 20px 0;
+        }
+
+        .download-button {
+            background: #00b894;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .download-button:hover {
+            background: #00a085;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .certificate h2 {
+                font-size: 2rem;
+            }
+            
+            .certificate .winner-name {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="title">SÜPER ŞANSLI OYUN</h1>
+        <p class="subtitle">Efsanevi şansını dene!</p>
+        
+        <div class="odds">
+            🍀 Kazanma Şansı: 1 / 100.000.000.000.000.000.000.000 🍀
+        </div>
+        
+        <button class="play-button" id="playButton" onclick="playGame()">
+            🎲 ŞANSINI DENE! 🎲
+        </button>
+        
+        <div class="timer" id="timer"></div>
+        <div class="attempts" id="attempts">Deneme sayısı: 0</div>
+        
+        <div class="name-input" id="nameInput">
+            <h3>🎉 TEBRİKLER! KAZANDINIZ! 🎉</h3>
+            <p>Lütfen isminizi girin:</p>
+            <input type="text" id="winnerName" placeholder="İsminizi yazın...">
+            <br>
+            <button onclick="generateCertificate()">Sertifika Oluştur</button>
+        </div>
+        
+        <div class="certificate" id="certificate">
+            <div class="certificate-content">
+                <h2>🏆 KAZANAN SERTİFİKASI 🏆</h2>
+                <div class="winner-name" id="certificateName"></div>
+                <div class="message">
+                    Bu kişi, 100 katrilyon'da 1 şansla<br>
+                    SÜPER ŞANSLI OYUN'u kazanmıştır!<br><br>
+                    🌟 Efsanevi Şans Seviyesi: MAKSIMUM 🌟<br>
+                    📅 Tarih: <span id="certificateDate"></span>
+                </div>
+                <button class="download-button" onclick="downloadCertificate()">
+                    📥 Sertifikayı İndir (JPG)
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div style="position: fixed; bottom: 10px; right: 20px; color: rgba(255,255,255,0.7); font-size: 0.9rem; font-style: italic; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+        🌋 Yanardağ tarafından yapılmıştır
+    </div>
+
+    <script>
+        let attemptCount = 0;
+        let lastPlayTime = 0;
+        const WAIT_TIME = 2 * 60 * 1000; // 2 dakika
+        const WIN_ODDS = 100000000000000000000000; // 100 katrilyon
+
+        // Benzersiz cihaz ID'si oluştur (localStorage ile kalıcı)
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('gameDeviceId');
+            if (!deviceId) {
+                deviceId = 'device_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+                localStorage.setItem('gameDeviceId', deviceId);
+            }
+            return deviceId;
+        }
+
+        // Son oynama zamanını kontrol et
+        function getLastPlayTime() {
+            const deviceId = getDeviceId();
+            const lastTime = localStorage.getItem('lastPlayTime_' + deviceId);
+            return lastTime ? parseInt(lastTime) : 0;
+        }
+
+        function setLastPlayTime() {
+            const deviceId = getDeviceId();
+            localStorage.setItem('lastPlayTime_' + deviceId, Date.now().toString());
+        }
+
+        function updateTimer() {
+            const now = Date.now();
+            const lastPlay = getLastPlayTime();
+            const timePassed = now - lastPlay;
+            const timeLeft = WAIT_TIME - timePassed;
+
+            if (timeLeft > 0) {
+                const minutes = Math.floor(timeLeft / 60000);
+                const seconds = Math.floor((timeLeft % 60000) / 1000);
+                document.getElementById('timer').textContent = 
+                    `⏰ Bekleme süresi: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('playButton').disabled = true;
+                setTimeout(updateTimer, 1000);
+            } else {
+                document.getElementById('timer').textContent = '';
+                document.getElementById('playButton').disabled = false;
+            }
+        }
+
+        function playGame() {
+            const now = Date.now();
+            const lastPlay = getLastPlayTime();
+            
+            if (now - lastPlay < WAIT_TIME) {
+                alert('Henüz oynayamazsınız! Lütfen bekleme süresini bekleyin.');
+                return;
+            }
+
+            attemptCount++;
+            setLastPlayTime();
+            
+            document.getElementById('attempts').textContent = `Deneme sayısı: ${attemptCount}`;
+            document.getElementById('playButton').disabled = true;
+            document.getElementById('playButton').textContent = '🎲 ŞANS HESAPLANIYOR... 🎲';
+
+            // Animasyon efekti
+            setTimeout(() => {
+                const randomNumber = Math.floor(Math.random() * WIN_ODDS) + 1;
+                
+                if (randomNumber === 1) {
+                    // KAZANDI!
+                    document.getElementById('playButton').textContent = '🎉 KAZANDINIZ! 🎉';
+                    document.getElementById('nameInput').style.display = 'block';
+                    createConfetti();
+                } else {
+                    // Kaybetti
+                    document.getElementById('playButton').textContent = '😔 KAYBETTINIZ! 😔';
+                    setTimeout(() => {
+                        document.getElementById('playButton').textContent = '🎲 ŞANSINI DENE! 🎲';
+                        updateTimer();
+                    }, 2000);
+                }
+            }, 2000);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.background = ['#ff6b6b', '#4ecdc4', '#45b7aa', '#ffeaa7', '#fd79a8'][Math.floor(Math.random() * 5)];
+                    confetti.style.animationDelay = Math.random() * 3 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }, i * 100);
+            }
+        }
+
+        function generateCertificate() {
+            const name = document.getElementById('winnerName').value.trim();
+            if (!name) {
+                alert('Lütfen isminizi girin!');
+                return;
+            }
+
+            document.getElementById('certificateName').textContent = name;
+            document.getElementById('certificateDate').textContent = new Date().toLocaleDateString('tr-TR');
+            document.getElementById('certificate').style.display = 'block';
+            document.getElementById('nameInput').style.display = 'none';
+        }
+
+        function downloadCertificate() {
+            const certificate = document.getElementById('certificate');
+            
+            html2canvas(certificate, {
+                backgroundColor: null,
+                scale: 2,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'kazanan-sertifikasi.jpg';
+                link.href = canvas.toDataURL('image/jpeg', 0.9);
+                link.click();
+            }).catch(err => {
+                console.error('Sertifika indirme hatası:', err);
+                alert('Sertifika indirme sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+            });
+        }
+
+        // Sayfa yüklendiğinde timer'ı başlat
+        window.onload = function() {
+            updateTimer();
+        };
+    </script>
+</body>
+</html>
