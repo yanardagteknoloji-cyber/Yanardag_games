@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yılan Oyunu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#17112a; --cab:#241a3d; --cab-edge:#3a2c5e; --screen:#080b10;
+  --ink:#ece6cf; --dim:#8f86b0; --snake:#5cff7a;
+  --font:"Press Start 2P", ui-monospace, "Courier New", monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);
+  background-image:radial-gradient(circle at 50% 0%, #2c2050 0, transparent 60%);
+  color:var(--ink); font-family:var(--font); font-size:12px;
+  display:flex; align-items:center; justify-content:center;
+  padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));
+  overflow-x:hidden; user-select:none; -webkit-user-select:none;
+}
+.cab{
+  width:min(100%,440px); background:var(--cab); padding:16px;
+  border:4px solid var(--cab-edge); border-radius:14px;
+  box-shadow:0 0 0 4px #0d0818, 0 18px 0 -4px #0d0818;
+}
+h1{margin:0 0 14px; font-size:16px; font-weight:400; text-align:center; letter-spacing:2px; color:var(--snake); text-shadow:2px 2px 0 #0d0818}
+.hud{display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:10px; gap:8px}
+.hud div{line-height:1.6}
+.hud small{display:block; font-size:8px; color:var(--dim)}
+.hud b{font-weight:400; font-size:14px; color:var(--snake)}
+.btns{display:flex; flex-direction:column; gap:6px}
+#snd,#mus{font:inherit; font-size:9px; color:var(--ink); background:#0d0818; border:2px solid var(--cab-edge); padding:8px; cursor:pointer; border-radius:4px}
+#snd:focus-visible,#mus:focus-visible,.sw:focus-visible,.pad button:focus-visible,#ov button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
+.screen{position:relative; background:var(--screen); border:4px solid #0d0818; border-radius:6px; touch-action:none; box-shadow:inset 0 0 40px rgba(0,0,0,.8)}
+canvas{display:block; width:100%; height:auto; aspect-ratio:1; image-rendering:pixelated}
+.screen::after{ /* scanlines */
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:repeating-linear-gradient(to bottom, rgba(0,0,0,.22) 0 1px, transparent 1px 3px);
+}
+#ov{
+  position:absolute; inset:0; z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:12px; text-align:center; padding:14px; background:rgba(8,11,16,.84); overflow:auto;
+}
+#ov.hide{display:none}
+#ov h2{margin:0; font-size:18px; font-weight:400; color:var(--snake); line-height:1.5}
+#ov p{margin:0; font-size:9px; line-height:1.9; color:var(--dim)}
+#ovBtn{font:inherit; font-size:12px; color:#080b10; background:var(--snake); border:0; padding:12px 18px; cursor:pointer; box-shadow:4px 4px 0 #0d0818}
+#ovBtn:active{transform:translate(2px,2px); box-shadow:2px 2px 0 #0d0818}
+#setup{display:flex; flex-direction:column; gap:12px; width:100%}
+#setup.hide{display:none}
+.grp{display:flex; flex-direction:column; align-items:center; gap:8px}
+.grp > span{font-size:8px; color:var(--dim)}
+.swatches{display:flex; gap:8px; justify-content:center}
+.opts{display:flex; gap:6px; justify-content:center}
+.opt{font:inherit; font-size:8px; color:var(--ink); background:#0d0818; border:3px solid var(--cab-edge); padding:9px 8px; cursor:pointer; border-radius:3px}
+.opt[aria-pressed="true"]{background:var(--snake); color:#080b10; border-color:var(--snake)}
+footer{margin-top:18px; text-align:center; font-size:8px; letter-spacing:1px; color:var(--dim)}
+.sw{width:28px; height:28px; border:3px solid #0d0818; cursor:pointer; padding:0; border-radius:2px; box-shadow:inset -4px -4px 0 rgba(0,0,0,.28)}
+.sw[aria-pressed="true"]{outline:3px solid var(--ink); outline-offset:1px}
+.help{margin:12px 0 0; font-size:8px; line-height:1.9; color:var(--dim); text-align:center}
+.pad{display:none; margin:14px auto 0; width:168px; grid-template-columns:repeat(3,1fr); gap:6px}
+.pad button{font:inherit; font-size:16px; height:52px; color:var(--ink); background:#0d0818; border:3px solid var(--cab-edge); border-radius:6px; touch-action:manipulation}
+.pad button:active{background:var(--cab-edge)}
+.pad .u{grid-column:2}.pad .l{grid-column:1;grid-row:2}.pad .d{grid-column:2;grid-row:2}.pad .r{grid-column:3;grid-row:2}
+@media (pointer:coarse){.pad{display:grid}.help{display:none}}
+@media (max-width:380px){h1{font-size:13px}.sw{width:24px;height:24px}}
+</style>
+</head>
+<body>
+<main class="cab">
+  <h1>YILAN</h1>
+  <div class="hud">
+    <div><small>SKOR</small><b id="score">0</b></div>
+    <div><small>REKOR</small><b id="best">0</b></div>
+    <div class="btns">
+      <button id="mus" type="button" aria-pressed="true">MÜZİK: AÇIK</button>
+      <button id="snd" type="button" aria-pressed="true">EFEKT: AÇIK</button>
+    </div>
+  </div>
+
+  <div class="screen" id="screen">
+    <canvas id="c" aria-label="Yılan oyunu alanı"></canvas>
+    <div id="ov">
+      <h2 id="ovTitle">YILAN</h2>
+      <p id="ovText">Elmaları ye, büyü.<br>Duvara ve kendine çarpma!</p>
+      <div id="setup">
+        <div class="grp">
+          <span>Yılan rengi</span>
+          <div class="swatches" id="swatches" role="group" aria-label="Yılan rengi seç"></div>
+        </div>
+        <div class="grp">
+          <span>Arena boyutu</span>
+          <div class="opts" id="sizes" role="group" aria-label="Arena boyutu seç"></div>
+        </div>
+      </div>
+      <button id="ovBtn" type="button">BAŞLA</button>
+    </div>
+  </div>
+
+  <p class="help">Ok tuşları / WASD: yön &nbsp; Boşluk: duraklat</p>
+
+  <div class="pad" aria-label="Yön tuşları">
+    <button class="u" data-d="up" aria-label="Yukarı">▲</button>
+    <button class="l" data-d="left" aria-label="Sola">◀</button>
+    <button class="d" data-d="down" aria-label="Aşağı">▼</button>
+    <button class="r" data-d="right" aria-label="Sağa">▶</button>
+  </div>
+
+  <footer>by yanardağ</footer>
+</main>
+
+<script>
+(() => {
+  let COLS = 20, ROWS = 20, S = 20;
+  const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+
+  const $ = id => document.getElementById(id);
+  const scoreEl = $('score'), bestEl = $('best'), ov = $('ov');
+  const ovTitle = $('ovTitle'), ovText = $('ovText'), ovBtn = $('ovBtn');
+
+  const COLORS = [
+    { n:'Yeşil',   a:'#5cff7a', b:'#1f9e3c' },
+    { n:'Turuncu', a:'#ffa23a', b:'#c25e0a' },
+    { n:'Mavi',    a:'#4cc3ff', b:'#1b78b8' },
+    { n:'Pembe',   a:'#ff6fb5', b:'#b8337a' },
+    { n:'Mor',     a:'#b88cff', b:'#6a3fc2' },
+    { n:'Sarı',    a:'#ffe14a', b:'#b89a10' }
+  ];
+
+  // güvenli localStorage
+  const store = {
+    get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : v; } catch(e){ return d; } },
+    set(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+  };
+
+  let colorIdx = Math.min(Math.max(parseInt(store.get('snake-color', '0'), 10) || 0, 0), COLORS.length - 1);
+  const SIZES = {
+    small:  { n:'KÜÇÜK', cols:12, S:34 },
+    medium: { n:'ORTA',  cols:20, S:20 },
+    large:  { n:'BÜYÜK', cols:32, S:13 }
+  };
+  const savedSize = store.get('snake-size', 'medium');
+  let sizeKey = SIZES[savedSize] ? savedSize : 'medium';
+  let best = 0;
+  const sizeWrap = $('sizes');
+  Object.keys(SIZES).forEach(key => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'opt'; b.textContent = SIZES[key].n;
+    b.title = SIZES[key].cols + '×' + SIZES[key].cols;
+    b.addEventListener('click', () => applySize(key));
+    sizeWrap.appendChild(b);
+  });
+  let soundOn = store.get('snake-sound', '1') === '1';
+
+  // ---------- renk seçici ----------
+  const swWrap = $('swatches');
+  COLORS.forEach((c, i) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'sw'; b.style.background = c.a;
+    b.setAttribute('aria-label', c.n); b.title = c.n;
+    b.addEventListener('click', () => setColor(i));
+    swWrap.appendChild(b);
+  });
+  function setColor(i){
+    colorIdx = i; store.set('snake-color', i);
+    document.documentElement.style.setProperty('--snake', COLORS[i].a);
+    [...swWrap.children].forEach((el, j) => el.setAttribute('aria-pressed', j === i));
+  }
+  setColor(colorIdx);
+
+  // ---------- ses ----------
+  let actx = null;
+  function beep(freq, dur, type = 'square', vol = 0.05){
+    if (!soundOn) return;
+    try {
+      ac();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type; o.frequency.value = freq;
+      g.gain.value = vol;
+      g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime + dur);
+    } catch(e){}
+  }
+  const sndBtn = $('snd');
+  function renderSnd(){ sndBtn.textContent = 'EFEKT: ' + (soundOn ? 'AÇIK' : 'KAPALI'); sndBtn.setAttribute('aria-pressed', soundOn); }
+  sndBtn.addEventListener('click', () => { soundOn = !soundOn; store.set('snake-sound', soundOn ? '1' : '0'); renderSnd(); beep(660, .08); sndBtn.blur(); });
+  renderSnd();
+
+  // ---------- müzik (8-bit döngü, dosya gerekmez) ----------
+  let musOn = store.get('snake-music', '1') === '1', musTimer = null, musStep = 0, musNext = 0, musGain = null;
+  const STEP = 60 / 140 / 2;                       // 140 BPM, sekizlik nota
+  const ROOTS = [45, 41, 48, 43, 45, 41, 48, 43];  // Am F C G | Am F C G
+  const LEAD = [
+    [69,0,72,0,76,72,69,0], [65,0,69,0,72,69,65,0], [67,0,72,0,76,72,67,0], [71,74,79,74,71,67,71,0],
+    [76,0,76,74,72,0,69,0], [72,0,69,0,65,0,69,72], [76,0,79,0,76,72,67,0], [74,0,71,0,67,71,74,0]
+  ];
+  const hz = n => 440 * Math.pow(2, (n - 69) / 12);
+
+  function ac(){
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    return actx;
+  }
+  function tone(f, t, dur, type, vol){
+    const c = ac(), o = c.createOscillator(), g = c.createGain();
+    if (!musGain){ musGain = c.createGain(); musGain.gain.value = 0.8; musGain.connect(c.destination); }
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(musGain);
+    o.start(t); o.stop(t + dur + 0.02);
+  }
+  function musSched(){
+    try {
+      const c = ac();
+      while (musNext < c.currentTime + 0.25){
+        const bar = Math.floor(musStep / 8), i = musStep % 8;
+        tone(hz(ROOTS[bar] + (i % 4 === 2 ? 12 : 0)), musNext, STEP * 0.9, 'triangle', 0.07);
+        const n = LEAD[bar][i];
+        if (n) tone(hz(n), musNext, STEP * 1.6, 'square', 0.028);
+        musNext += STEP; musStep = (musStep + 1) % 64;
+      }
+    } catch(e){}
+  }
+  function musStart(){
+    if (!musOn || musTimer) return;
+    try { musNext = ac().currentTime + 0.05; musTimer = setInterval(musSched, 50); } catch(e){}
+  }
+  function musStop(){ if (musTimer){ clearInterval(musTimer); musTimer = null; } }
+
+  const musBtn = $('mus');
+  function renderMus(){ musBtn.textContent = 'MÜZİK: ' + (musOn ? 'AÇIK' : 'KAPALI'); musBtn.setAttribute('aria-pressed', musOn); }
+  musBtn.addEventListener('click', () => {
+    musOn = !musOn; store.set('snake-music', musOn ? '1' : '0'); renderMus();
+    if (!musOn) musStop(); else try { ac(); } catch(e){}
+    musBtn.blur();
+  });
+  renderMus();
+
+  // ---------- oyun durumu ----------
+  let snake, dir, queue, apple, score, speed, state = 'idle', last = 0;
+  const DIRS = { up:{x:0,y:-1}, down:{x:0,y:1}, left:{x:-1,y:0}, right:{x:1,y:0} };
+
+  function applySize(key){
+    sizeKey = key; store.set('snake-size', key);
+    const z = SIZES[key];
+    COLS = ROWS = z.cols; S = z.S;
+    cv.width = COLS * S; cv.height = ROWS * S;
+    best = parseInt(store.get('snake-best-' + key, '0'), 10) || 0;
+    Object.keys(SIZES).forEach((k, j) => sizeWrap.children[j].setAttribute('aria-pressed', k === key));
+    if (state !== 'play') reset();
+  }
+
+  function reset(){
+    const cx = Math.floor(COLS / 2), cy = Math.floor(ROWS / 2);
+    snake = [{x:cx,y:cy},{x:cx-1,y:cy},{x:cx-2,y:cy}];
+    dir = DIRS.right; queue = []; score = 0; speed = 140;
+    placeApple(); scoreEl.textContent = 0; bestEl.textContent = best;
+  }
+  function placeApple(){
+    const free = [];
+    for (let x = 0; x < COLS; x++) for (let y = 0; y < ROWS; y++)
+      if (!snake.some(s => s.x === x && s.y === y)) free.push({x, y});
+    apple = free.length ? free[Math.floor(Math.random() * free.length)] : null;
+  }
+
+  const setupEl = $('setup');
+  function showOverlay(title, text, btn, setup){
+    ovTitle.textContent = title; ovText.innerHTML = text; ovBtn.textContent = btn;
+    setupEl.classList.toggle('hide', !setup);
+    ov.classList.remove('hide'); ovBtn.focus({preventScroll:true});
+  }
+  function start(){
+    if (state === 'idle' || state === 'over') reset();
+    state = 'play'; last = performance.now();
+    try { ac(); } catch(e){}
+    ov.classList.add('hide'); ovBtn.blur();
+  }
+  function pause(){
+    if (state !== 'play') return;
+    state = 'pause';
+    showOverlay('DURAKLATILDI', 'Devam etmek için<br>boşluk tuşuna bas veya dokun', 'DEVAM', false);
+  }
+  function gameOver(won){
+    state = 'over';
+    if (score > best){ best = score; store.set('snake-best-' + sizeKey, best); bestEl.textContent = best; }
+    beep(150, .35, 'sawtooth', .07);
+    showOverlay(won ? 'KAZANDIN!' : 'OYUN BİTTİ', 'Skor: ' + score + '<br>Rekor: ' + best, 'TEKRAR OYNA', true);
+  }
+
+  function step(){
+    if (queue.length) dir = queue.shift();
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    const eat = apple && head.x === apple.x && head.y === apple.y;
+    const body = eat ? snake : snake.slice(0, -1);
+    if (head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS || body.some(s => s.x === head.x && s.y === head.y))
+      return gameOver(false);
+    snake.unshift(head);
+    if (eat){
+      score++; scoreEl.textContent = score;
+      speed = Math.max(70, speed - 3);
+      beep(880, .08); setTimeout(() => beep(1175, .1), 70);
+      placeApple();
+      if (!apple) return gameOver(true);
+    } else snake.pop();
+  }
+
+  function turn(name){
+    const d = DIRS[name]; if (!d) return;
+    if (state === 'idle' || state === 'over'){ start(); }
+    else if (state === 'pause'){ state = 'play'; last = performance.now(); ov.classList.add('hide'); }
+    const ref = queue.length ? queue[queue.length - 1] : dir;
+    if ((d.x === -ref.x && d.y === -ref.y) || (d.x === ref.x && d.y === ref.y)) return;
+    if (queue.length < 2) queue.push(d);
+  }
+
+  // ---------- çizim ----------
+  const APPLE = [
+    ".....bgg..", ".....b....", "..rrrbrr..", ".rhhrrrrrd", ".rhrrrrrrd",
+    ".rrrrrrrrd", ".rrrrrrrrd", ".rrrrrrrdd", "..rrrrrdd.", "...rrrdd.."
+  ];
+  const AP = { r:'#ff3b3b', d:'#b81d2e', h:'#ffc2c2', g:'#5cff7a', b:'#8a5a2b' };
+
+  function drawApple(){
+    if (!apple) return;
+    const k = S / 10, px = apple.x * S, py = apple.y * S;
+    APPLE.forEach((row, j) => [...row].forEach((ch, i) => {
+      if (ch === '.') return;
+      ctx.fillStyle = AP[ch];
+      ctx.fillRect(px + Math.round(i * k), py + Math.round(j * k), Math.ceil(k), Math.ceil(k));
+    }));
+  }
+
+  function draw(){
+    ctx.fillStyle = '#080b10'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = '#141a24';
+    for (let x = 0; x < COLS; x++) for (let y = 0; y < ROWS; y++)
+      ctx.fillRect(x * S + Math.floor(S/2) - 1, y * S + Math.floor(S/2) - 1, 2, 2);
+
+    drawApple();
+
+    const c = COLORS[colorIdx];
+    const u = S / 20, g = Math.max(1, Math.round(u)), m = Math.round(S * 0.15);
+    for (let i = snake.length - 1; i >= 0; i--){
+      const s = snake[i], px = s.x * S, py = s.y * S;
+      ctx.fillStyle = c.b; ctx.fillRect(px + g, py + g, S - 2*g, S - 2*g);
+      ctx.fillStyle = c.a; ctx.fillRect(px + m, py + m, S - 2*m, S - 2*m);
+      if (i === 0){
+        ctx.fillStyle = c.a; ctx.fillRect(px + g, py + g, S - 2*g, S - 2*g);
+        ctx.fillStyle = '#080b10';
+        const es = Math.max(2, Math.round(4 * u));
+        // gözler: hareket yönüne göre
+        let e1, e2;
+        if (dir.x !== 0){ const fx = dir.x > 0 ? 12 : 4; e1 = [fx, 4]; e2 = [fx, 12]; }
+        else { const fy = dir.y > 0 ? 12 : 4; e1 = [4, fy]; e2 = [12, fy]; }
+        ctx.fillRect(px + Math.round(e1[0] * u), py + Math.round(e1[1] * u), es, es);
+        ctx.fillRect(px + Math.round(e2[0] * u), py + Math.round(e2[1] * u), es, es);
+      }
+    }
+  }
+
+  function loop(t){
+    if (state === 'play') musStart(); else musStop();
+    if (state === 'play' && t - last >= speed){ last = t; step(); }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // ---------- girişler ----------
+  const KEYS = {
+    ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+    w:'up', s:'down', a:'left', d:'right', W:'up', S:'down', A:'left', D:'right'
+  };
+  addEventListener('keydown', e => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (KEYS[e.key]){ e.preventDefault(); turn(KEYS[e.key]); return; }
+    if (e.key === ' ' || e.key === 'p' || e.key === 'P'){
+      e.preventDefault();
+      if (state === 'play') pause();
+      else if (state === 'pause'){ state = 'play'; last = performance.now(); ov.classList.add('hide'); }
+      else start();
+    }
+  });
+
+  ovBtn.addEventListener('click', () => {
+    if (state === 'pause'){ state = 'play'; last = performance.now(); ov.classList.add('hide'); }
+    else start();
+  });
+
+  document.querySelectorAll('.pad button').forEach(b =>
+    b.addEventListener('pointerdown', e => { e.preventDefault(); turn(b.dataset.d); }));
+
+  // kaydırma (swipe)
+  const screenEl = $('screen'); let t0 = null;
+  screenEl.addEventListener('touchstart', e => { const t = e.touches[0]; t0 = { x:t.clientX, y:t.clientY }; }, { passive:true });
+  screenEl.addEventListener('touchmove', e => e.preventDefault(), { passive:false });
+  screenEl.addEventListener('touchend', e => {
+    if (!t0) return;
+    const t = e.changedTouches[0], dx = t.clientX - t0.x, dy = t.clientY - t0.y;
+    t0 = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+    turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+  });
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+  applySize(sizeKey);
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
