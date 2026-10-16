@@ -196,6 +196,8 @@ label.lbl{display:block;font-size:14px;margin:0 0 6px;color:var(--ink2)}
 .mode-tag.done{background:var(--teal);border-style:solid}
 .faded{opacity:0!important;filter:blur(8px);transition:opacity .9s ease,filter .9s ease;pointer-events:none}
 .see-img.blurry img,.see-img.blurry canvas{filter:blur(var(--bl,14px));transition:filter .15s linear}
+.see-img.blurry,.see-img.blurry *{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none}
+.see-img.blurry canvas{pointer-events:none}
 .canvas-wrap.blind::after{content:"🙈 Kör mod: çizimini göremezsin!";position:absolute;inset:0;display:grid;place-items:center;background:var(--ink);color:var(--paper);font-family:'Bagel Fat One',system-ui,sans-serif;font-size:clamp(20px,4vw,32px);line-height:1.2;text-align:center;padding:20px;pointer-events:none;opacity:1}
 .canvas-wrap.blind.reveal::after{display:none}
 .palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;align-items:center}
@@ -674,7 +676,7 @@ const MODES=[
  {id:'kor',    e:'🙈', t:'Kör',     d:'Çizimini göremezsin, sadece hisset.'},
  {id:'tersyz', e:'🔄', t:'Ters',    d:'Tuval aynalı: sağa çizersen sola gider!'},
  {id:'sessiz', e:'🤫', t:'Sessiz',  d:'Yazı yok: herkes bir öncekinin çizimini devam ettirir.'},
- {id:'silik',  e:'◌', t:'Silik',   d:'Ne çizeceğin 5 sn sonra kaybolur. Aklında tut!'},
+ {id:'silik',  e:'◌', t:'Silik',   d:'Çizdiğin her çizgi 5 sn sonra kaybolur!'},
  {id:'tekcizgi',e:'✎', t:'Tek çizgi', d:'Kalemi bir kez kaldırırsan çizim biter. Tek hamlede çiz.'},
  {id:'azrenk', e:'🎨', t:'Az renk', d:'Sana sadece 3 rastgele renk verilir.'},
  {id:'minik',  e:'🔬', t:'Minik tuval', d:'Çizim alanı çok küçük. Sıkış!'},
@@ -1306,7 +1308,7 @@ function hostStartGame(){
   HOST.chains=K;
   // K*N albüm: albüm (k*N + i) -> oyuncu i, k. zincirini başlatır
   HOST.albums=[];
-  for(let k=0;k<K;k++) HOST.order.forEach(id=>HOST.albums.push({owner:id,links:[],chain:k}));
+  for(let k=0;k<K;k++) HOST.order.forEach(id=>HOST.albums.push({owner:id,links:[],chain:k,mode:pickChainMode()}));
   HOST.totalRounds=Math.max(2,n);
   HOST.round=0;
   HOST.phase='play';
@@ -1321,10 +1323,11 @@ function roundKindFor(round){
   if(m==='bilgi')  return round===0?'draw':(round%2===1?'guess':'draw'); // çizim, tahmin, çizim…
   return round===0?'write':(round%2===1?'draw':'guess');
 }
-function pickRoundMode(){
+const KARMA_POOL=['normal','kor','tersyz','silik','tekcizgi','azrenk','minik','bulanik'];
+/* Karma: mod her ZİNCİRE (albüme) bir kez atanır, tur tur değişmez */
+function pickChainMode(){
   if(HOST.mode!=='karma') return HOST.mode;
-  const pool=['normal','kor','tersyz','silik','tekcizgi','azrenk','minik','bulanik'];
-  return pool[rnd(pool.length)];
+  return KARMA_POOL[rnd(KARMA_POOL.length)];
 }
 
 /* Bir turda oyuncu i, k. görevinde şu albümle çalışır (dönüşüm garantili: her albümde herkes 1 kez) */
@@ -1338,14 +1341,13 @@ function slotAssign(pid,slot){
   const album=HOST.albums[albumIdx];
   const prev=album.links.length?album.links[album.links.length-1]:null;
   const kind=HOST.roundKind;
-  return {t:'assign',round:HOST.round,total:HOST.totalRounds,kind,rmode:HOST.roundMode,
+  return {t:'assign',round:HOST.round,total:HOST.totalRounds,kind,rmode:album.mode||HOST.mode,
     duration:HOST.duration,endsAt:HOST.endsAt,slot,slots:HOST.chains,albumIdx,
     prev: prev?{type:prev.type,data:prev.data}:null,
     seed:(kind==='write' && HOST.mode!=='bilgi')?PROMPTS[rnd(PROMPTS.length)]:null};
 }
 function hostBeginRound(){
   HOST.roundKind=roundKindFor(HOST.round);
-  HOST.roundMode=pickRoundMode();
   HOST.submitted={};   // oyuncu -> tüm görevlerini bitirdi mi
   HOST.progress={};    // oyuncu -> kaç görev bitirdi
   const kind=HOST.roundKind;
@@ -1438,7 +1440,7 @@ function startTimer(dur,endsAt,onEnd){
 }
 
 function onAssign(a){
-  clearInterval(S.fadeIv); clearInterval(S.blurIv);
+  clearInterval(S.fadeIv); clearInterval(S.blurIv); cancelAnimationFrame(S.silikRaf); S.silik=false;
   const sameRound = S.assign && S.assign.round===a.round;   // aynı turun 2. 3. görevi mi?
   S.submitted=false; S.phase=a.kind; S.assign=a; S.lastTick=-1;
   show('game');
@@ -1474,7 +1476,7 @@ function onAssign(a){
         <div class="done-bar"><button class="btn rose" id="btnSend">Gönder</button></div>
       </div>
       <div id="dots"></div>`;
-    renderPrevInto($('#seeBox'),a.prev);
+    renderPrevInto($('#seeBox'),a.prev,rm==='bulanik');
     if(rm==='bulanik'){
       const box=$('#seeBox'); box.classList.add('blurry'); box.style.setProperty('--bl','14px');
       const cap=document.createElement('div'); cap.className='mode-tag'; cap.textContent='🌀 Görüntü yavaşça netleşiyor…'; box.parentNode.insertBefore(cap,box.nextSibling);
@@ -1522,20 +1524,59 @@ function onAssign(a){
   renderWaitDots();
 }
 
-/* Silik mod: ipucu 5 sn sonra kaybolur */
+/* Silik mod: çizdiğin her çizgi, bitirdikten 5 sn sonra kendi başına kaybolur */
+const SILIK_MS=5000, SILIK_FADE=700;
 function applyFadeHint(){
-  const targets=[$('#promptBox'),$('#seeBox')].filter(Boolean);
-  if(!targets.length) return;
-  const tag=document.createElement('div'); tag.className='mode-tag'; tag.id='fadeTag'; tag.innerHTML='<svg viewBox="0 0 32 32" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="vertical-align:-3px;margin-right:4px" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke-dasharray="3.2 3.6"/></svg>5 saniye sonra kaybolacak…';
-  targets[0].parentNode.insertBefore(tag,targets[0].nextSibling);
-  let n=5; const iv=setInterval(()=>{ n--; if($('#fadeTag')) $('#fadeTag').innerHTML='<svg viewBox="0 0 32 32" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="vertical-align:-3px;margin-right:4px" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke-dasharray="3.2 3.6"/></svg>'+(n>0?(n+' saniye sonra kaybolacak…'):'Kayboldu! Aklında tut'); if(n<=0){ clearInterval(iv); targets.forEach(t=>{ t.classList.add('faded'); }); } },1000);
-  S.fadeIv=iv;
+  const w=$('#cvWrap'); if(!w) return;
+  const tag=document.createElement('div'); tag.className='mode-tag'; tag.id='fadeTag';
+  tag.innerHTML='<svg viewBox="0 0 32 32" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="vertical-align:-3px;margin-right:4px" aria-hidden="true"><circle cx="16" cy="16" r="12" stroke-dasharray="3.2 3.6"/></svg>Her çizgi 5 saniye sonra kaybolur. Gönderince tüm çizimin görünür!';
+  w.parentNode.insertBefore(tag,w.nextSibling);
 }
-function renderPrevInto(el,prev){
+function silikAlpha(st,now){
+  if(!st.done) return 1;
+  const left=st.t+SILIK_MS-now;
+  if(left<=0) return 0;
+  return left<SILIK_FADE?left/SILIK_FADE:1;
+}
+function paintStroke(c,st,alpha){
+  c.save(); c.globalAlpha=alpha; c.strokeStyle=st.color; c.fillStyle=st.color; c.lineWidth=st.size; c.lineCap='round'; c.lineJoin='round';
+  const P=st.pts;
+  if(st.kind==='pen'){
+    if(P.length<2){ c.beginPath(); c.arc(P[0].x,P[0].y,st.size/2,0,Math.PI*2); c.fill(); }
+    else { c.beginPath(); c.moveTo(P[0].x,P[0].y); for(let k=1;k<P.length;k++) c.lineTo(P[k].x,P[k].y); c.stroke(); }
+  }else{
+    const a=P[0], b=P[P.length-1]; c.beginPath();
+    if(st.kind==='line'){ c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); }
+    else if(st.kind==='rect'){ c.rect(a.x,a.y,b.x-a.x,b.y-a.y); }
+    else { c.ellipse((a.x+b.x)/2,(a.y+b.y)/2,Math.abs(b.x-a.x)/2,Math.abs(b.y-a.y)/2,0,0,Math.PI*2); }
+    c.stroke();
+  }
+  c.restore();
+}
+/* Tuvali, görünür çizgilerle baştan çizer. all=true → silinmiş olanlar dahil (gönderilen resim) */
+function silikRender(all,target){
+  const c=target||ctx, now=performance.now();
+  c.fillStyle='#fff'; c.fillRect(0,0,cv.width,cv.height);
+  for(const st of S.strokes){ const al=all?1:silikAlpha(st,now); if(al>0) paintStroke(c,st,al); }
+}
+function silikLoop(){
+  if(!S.silik||S.submitted) return;
+  const now=performance.now();
+  const key=S.strokes.map(st=>silikAlpha(st,now).toFixed(2)).join(',');
+  if(key!==S.silikKey){ S.silikKey=key; if(!S.drawing||S.tool==='pen') silikRender(false); if(S.drawing&&S.cur) paintStroke(ctx,S.cur,1); updRedo(); }
+  S.silikRaf=requestAnimationFrame(silikLoop);
+}
+function renderPrevInto(el,prev,noLeak){
   if(!prev){ el.innerHTML='<div style="padding:30px;text-align:center;line-height:1.3">—</div>'; return; }
   if(prev.type==='draw'){
     if(!prev.data){ el.innerHTML='<div style="padding:40px;text-align:center;font-size:18px;line-height:1.3;color:#666">(boş bırakılmış)</div>'; return; }
-    el.innerHTML='<img alt="Çizim" src="'+prev.data+'">';
+    if(noLeak){
+      /* Bulanık: sürüklenebilir <img> yok → orijinal görüntü sürükle-bırak/kaydet ile sızmaz */
+      const c=document.createElement('canvas'); c.width=800; c.height=560; c.setAttribute('role','img'); c.setAttribute('aria-label','Bulanık çizim');
+      c.draggable=false; el.innerHTML=''; el.appendChild(c);
+      ['dragstart','contextmenu','selectstart'].forEach(ev=>el.addEventListener(ev,e=>e.preventDefault()));
+      const im=new Image(); im.onload=()=>{ c.width=im.naturalWidth||800; c.height=im.naturalHeight||560; c.getContext('2d').drawImage(im,0,0); }; im.src=prev.data;
+    }else el.innerHTML='<img alt="Çizim" src="'+prev.data+'">';
   }else{
     el.innerHTML='<div style="padding:26px;text-align:center;font-size:22px;background:var(--white);line-height:1.3">'+esc(prev.data)+'</div>';
   }
@@ -1555,7 +1596,9 @@ function submitDraw(auto){
   if(S.submitted) return;
   S.submitted=true; clearTimer();
   let data=null;
+  if(S.silik){ cancelAnimationFrame(S.silikRaf); if(S.cur){ S.cur.done=true; S.cur.t=performance.now(); S.strokes.push(S.cur); S.cur=null; } }
   if(S.strokes.length){
+    if(S.silik) silikRender(true);   // Silik: sen çizgilerin kaybolduğunu görürsün, ama gönderilen resimde hepsi vardır
     data=cv.toDataURL('image/jpeg',0.72);
   }
   sfx(auto?'warn':'send');
@@ -1603,6 +1646,7 @@ function initCanvas(a){
   S.oneStroke = a.rmode==='tekcizgi'; S.strokeUsed=false; S.locked=false;
   S.color = '#1E2A4A';
   S.mirror = a.rmode==='tersyz';
+  S.silik = a.rmode==='silik'; S.cur=null; S.silikKey='';
   // Az renk: her oyuncu için 3 renk; aynı görevde aynı olsun diye görev bilgisinden türetilir
   let palette = COLORS;
   if(few){
@@ -1621,6 +1665,7 @@ function initCanvas(a){
   }
   $$('#tools .tool[data-tool]').forEach(b=>b.onclick=()=>setTool(b.dataset.tool));
   $('#btnUndo').onclick=undo; $('#btnRedo').onclick=redo; $('#btnClear').onclick=clearAll;
+  if(S.silik){ ['fill','eraser'].forEach(t=>{ const b=$('#tools .tool[data-tool="'+t+'"]'); if(b){ b.disabled=true; b.title+=' (Silik modda yok)'; } }); cancelAnimationFrame(S.silikRaf); S.silikRaf=requestAnimationFrame(silikLoop); }
   if(S.oneStroke){ $$('#tools .tool').forEach(b=>{ if(b.dataset.tool!=='pen'){ b.disabled=true; } }); ['btnUndo','btnRedo','btnClear'].forEach(id=>{ const el=$('#'+id); if(el) el.disabled=true; }); }
   const sz=$('#sizeR'); const upd=()=>{ S.size=+sz.value; const d=$('#sizeDot'); d.style.width=d.style.height=Math.min(30,S.size)+'px'; }; sz.oninput=upd; upd();
   // Pointer olayları
@@ -1644,6 +1689,10 @@ function pDown(e){
   try{cv.setPointerCapture(e.pointerId)}catch(_){}
   const p=pos(e);
   if(S.tool==='fill'){ floodFill(Math.round(p.x),Math.round(p.y),S.color); commit({tool:'fill'}); sfx('fill'); return; }
+  if(S.silik){
+    S.drawing=true; S.redo=[]; S.cur={kind:S.tool,color:S.color,size:S.size,pts:[p],done:false,t:0};
+    silikRender(false); paintStroke(ctx,S.cur,1); S.last=p; return;
+  }
   S.drawing=true; S.redo=[]; updRedo();
   S.snap=ctx.getImageData(0,0,cv.width,cv.height);
   S.last=p; S.shapeStart=p;
@@ -1655,6 +1704,11 @@ function pMove(e){
   if(!S.drawing) return;
   e.preventDefault();
   const p=pos(e);
+  if(S.silik&&S.cur){
+    if(S.tool==='pen'){ sfx('brush'); S.cur.pts.push(p); paintStroke(ctx,{kind:'pen',color:S.cur.color,size:S.cur.size,pts:[S.last,p]},1); S.last=p; }
+    else { S.cur.pts=[S.cur.pts[0],p]; silikRender(false); paintStroke(ctx,S.cur,1); }
+    return;
+  }
   if(S.tool==='pen'||S.tool==='eraser'){
     sfx('brush');
     ctx.strokeStyle=S.tool==='eraser'?'#fff':S.color; ctx.lineWidth=S.size; ctx.lineCap='round'; ctx.lineJoin='round';
@@ -1672,7 +1726,9 @@ function pMove(e){
 }
 function pUp(){
   if(!S.drawing) return;
-  S.drawing=false; commit({tool:S.tool});
+  S.drawing=false;
+  if(S.silik){ if(S.cur){ S.cur.done=true; S.cur.t=performance.now(); S.strokes.push(S.cur); S.cur=null; S.silikKey=''; updRedo(); } return; }
+  commit({tool:S.tool});
   if(S.oneStroke){ S.strokeUsed=true; const t=$('#strokeTag'); if(t){ t.textContent='Çizgin bitti! Gönderebilirsin'; t.classList.add('done'); } sfx('send'); }
 }
 function commit(){
@@ -1682,8 +1738,12 @@ function commit(){
   updRedo();
 }
 let undoBase=null;
-function updRedo(){ const b=$('#btnRedo'); if(b) b.disabled=!S.redo.length; const u=$('#btnUndo'); if(u) u.disabled=!S.strokes.length; }
+function updRedo(){ const b=$('#btnRedo'); if(b) b.disabled=!S.redo.length; const u=$('#btnUndo'); if(u) u.disabled=S.silik?!S.strokes.some(st=>silikAlpha(st,performance.now())>0):!S.strokes.length; }
 function undo(){
+  if(S.silik){
+    const now=performance.now(); let k=-1; for(let i=S.strokes.length-1;i>=0;i--){ if(silikAlpha(S.strokes[i],now)>0){ k=i; break; } }
+    if(k<0) return; sfx('undo'); S.redo.push(S.strokes.splice(k,1)[0]); S.silikKey=''; silikRender(false); updRedo(); return;
+  }
   if(!S.strokes.length) return;
   sfx('undo');
   S.redo.push(S.strokes.pop());
@@ -1693,9 +1753,11 @@ function undo(){
 }
 function redo(){
   if(!S.redo.length) return;
+  if(S.silik){ const st=S.redo.pop(); st.t=performance.now(); S.strokes.push(st); S.silikKey=''; silikRender(false); updRedo(); return; }
   const img=S.redo.pop(); S.strokes.push(img); ctx.putImageData(img,0,0); updRedo();
 }
 function clearAll(){
+  if(S.silik){ if(!S.strokes.length) return; sfx('err'); S.strokes=[]; S.redo=[]; S.silikKey=''; silikRender(false); updRedo(); return; }
   if(!S.strokes.length) return;
   sfx('err');
   ctx.fillStyle='#fff'; ctx.fillRect(0,0,cv.width,cv.height);
